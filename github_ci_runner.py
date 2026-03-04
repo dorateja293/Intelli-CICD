@@ -20,7 +20,7 @@ DB_PASSWORD = os.getenv("DB_PASSWORD")
 DB_HOST = os.getenv("DB_HOST")
 DB_PORT = os.getenv("DB_PORT")
 
-API_URL = "http://127.0.0.1:5000/predict"
+API_URL = "https://intelli-cicd.onrender.com/predict"
 
 
 def fail(message):
