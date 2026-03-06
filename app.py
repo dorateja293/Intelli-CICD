@@ -1,9 +1,11 @@
 import os
+import logging
 from flask import Flask, jsonify, request
 import joblib
 import pandas as pd
 
 app = Flask(__name__)
+logger = logging.getLogger(__name__)
 
 # ============================
 # LOAD ML MODEL
@@ -112,7 +114,8 @@ def predict():
         return jsonify({"error": f"Invalid feature value: {str(e)}"}), 400
 
     except Exception as e:
-        return jsonify({"error": str(e)}), 500
+        logger.exception("Unhandled prediction error: %s", str(e))
+        return jsonify({"error": "Internal server error"}), 500
 
 
 # ============================
