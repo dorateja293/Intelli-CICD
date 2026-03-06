@@ -1,7 +1,7 @@
 import requests
 import os
 
-url = os.getenv("PREDICT_API_URL", "https://intelli-cicd.onrender.com/predict")
+url = os.getenv("PREDICT_API_URL", "http://127.0.0.1:5000/predict")
 
 data = {
     "files_changed": 2,

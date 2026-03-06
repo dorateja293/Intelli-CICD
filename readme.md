@@ -1,149 +1,110 @@
-## Intelli-CICD
-AI-Powered CI/CD Optimization Platform
+# Intelli-CICD
 
-Intelli-CICD is a Machine Learning–driven CI/CD optimization system that predicts build failure probability and dynamically decides whether to run full test suites or skip/reduce tests to save execution time.
+Intelli-CICD is a Flask-based CI decision service that predicts failure probability for a commit and decides whether to run the full pytest suite or skip it.
 
-It helps engineering teams reduce CI costs, improve efficiency, and optimize build pipelines intelligently.
+## Current Architecture
 
-🧠 Problem Statement
+The project has four main parts:
 
-Traditional CI/CD pipelines run full test suites for every commit, even when the probability of failure is low. This leads to:
+- `app.py`: local prediction API backed by the trained model in `model/intelli_ci_model.pkl`
+- `github_ci_runner.py`: GitHub and PostgreSQL integration script for collecting commit metadata and storing decisions
+- `.github/workflows/intelli-ci.yml`: GitHub Actions workflow that validates the checked-out code and uses the local app for CI decisions
+- `schema.sql`: PostgreSQL bootstrap schema for `commit_history`
 
-⏳ Increased execution time
+## Prediction Contract
 
-💰 Higher infrastructure costs
+`POST /predict` expects these 11 numeric features:
 
-🔄 Slower developer feedback loop
+- `files_changed`
+- `lines_added`
+- `lines_deleted`
+- `code_churn`
+- `commit_hour`
+- `commit_day`
+- `historical_failure_rate`
+- `is_weekend`
+- `large_commit_flag`
+- `recent_failure_flag`
+- `execution_time`
 
-Intelli-CICD solves this by using historical commit data and ML models to intelligently decide when full testing is necessary.
+The API returns:
 
-🎯 Key Features
+```json
+{
+  "failure_probability": 0.23,
+  "decision": "SKIP_TESTS"
+}
+```
 
-🔍 Predicts build failure probability using ML
+The current decision threshold in code is `0.4`. If `failure_probability > 0.4`, the API returns `RUN_FULL_TESTS`; otherwise it returns `SKIP_TESTS`.
 
-⚡ Dynamically decides:
+## Local Setup
 
-Run full test suite
+1. Create and activate a virtual environment.
+2. Install dependencies:
 
-Run partial tests
-
-Skip tests
-
-📊 Uses commit metadata such as:
-
-Files changed
-
-Lines added/deleted
-
-Code churn
-
-Historical failure rate
-
-Commit timing features
-
-🧠 ML-based decision engine
-
-🔁 CI pipeline integration ready
-
-🌐 Web-based interface for visualization (optional)
-
-🏗 System Architecture
-Developer Commit
-        ↓
-Feature Extraction
-        ↓
-ML Model Prediction
-        ↓
-CI Decision Engine
-        ↓
-Run / Skip / Optimize Tests
-🛠 Tech Stack
-
-Backend:
-
-Python
-
-Flask
-
-Machine Learning:
-
-Scikit-learn
-
-Pandas
-
-NumPy
-
-Version Control & CI:
-
-Git
-
-GitHub Actions
-
-Optional Frontend:
-
-React (if implemented)
-
-📂 Project Structure
-intelli-cicd/
-│
-├── backend/
-│   ├── app.py
-│   ├── ci_decision.py
-│
-├── ml-model/
-│   ├── train.py
-│   ├── model.pkl
-│
-├── data/
-│
-├── .github/workflows/
-│
-├── requirements.txt
-├── README.md
-🔬 How It Works
-
-Collect commit-level metadata
-
-Engineer relevant features
-
-Train classification model on historical CI outcomes
-
-Predict failure probability
-
-Apply decision threshold logic:
-
-Example:
-
-if failure_probability < 0.25:
-    decision = "SKIP_TESTS"
-else:
-    decision = "RUN_FULL_TEST_SUITE"
-📊 Sample Output
-Failure Probability: 0.2310
-Decision: SKIP_TESTS
-🟢 Skipping tests to save time...
-🚀 Installation & Setup
-1️⃣ Clone Repository
-git clone https://github.com/your-username/intelli-cicd.git
-cd intelli-cicd
-2️⃣ Create Virtual Environment
-python -m venv venv
-source venv/bin/activate   # Mac/Linux
-venv\Scripts\activate      # Windows
-3️⃣ Install Dependencies
+```bash
 pip install -r requirements.txt
-4️⃣ Run Application
-python backend/app.py
-📈 Future Improvements
+```
 
-Deep learning–based prediction model
+3. Start the API:
 
-Real-time GitHub webhook integration
+```bash
+python app.py
+```
 
-Dashboard for CI analytics
+4. Optionally run the smoke test script:
 
-Reinforcement learning for adaptive thresholds
+```bash
+python test_api.py
+```
 
-Docker-based deployment
+By default, `test_api.py` uses `http://127.0.0.1:5000/predict`. Override it with `PREDICT_API_URL` when needed.
 
-Cloud deployment (AWS / Azure)
+## Environment Variables
+
+`github_ci_runner.py` requires:
+
+- `GITHUB_TOKEN`
+- `REPO_NAME`
+- `DB_NAME`
+- `DB_USER`
+- `DB_PASSWORD`
+- `DB_HOST`
+- `DB_PORT`
+
+Optional:
+
+- `PREDICT_API_URL`: defaults to `https://intelli-cicd.onrender.com/predict` in the runner
+
+## Database Setup
+
+Create the PostgreSQL table before running `github_ci_runner.py`:
+
+```bash
+psql -f schema.sql
+```
+
+The schema stores one row per commit SHA and updates the row if the same commit is processed again.
+
+## CI Workflow
+
+The GitHub Actions workflow now:
+
+- installs project dependencies
+- compiles the Python files
+- extracts commit-level file and churn metrics
+- calls the local Flask app via its test client
+- runs `pytest` only when the prediction says `RUN_FULL_TESTS`
+
+## Deployment
+
+`Procfile` is configured for Gunicorn:
+
+```bash
+web: gunicorn app:app
+```
+
+## Known Gap
+
+The model file was serialized with `scikit-learn 1.6.1`. If your local environment uses a different sklearn version, you may see compatibility warnings until the environment is rebuilt with `requirements.txt`.

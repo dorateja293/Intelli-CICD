@@ -28,32 +28,48 @@ jobs:
       - name: Compile Python files
         run: python -m py_compile app.py github_ci_runner.py test_api.py
 
-      - name: Extract Commit Features
+      - name: Extract commit features
+        id: features
+        shell: bash
+        env:
+          BEFORE_SHA: ${{ github.event.before }}
+          CURRENT_SHA: ${{ github.sha }}
         run: |
+          if [ -n "$BEFORE_SHA" ] && [ "$BEFORE_SHA" != "0000000000000000000000000000000000000000" ] && git cat-file -e "$BEFORE_SHA^{commit}" 2>/dev/null; then
+            FILES_CHANGED=$(git diff --name-only "$BEFORE_SHA" "$CURRENT_SHA" | wc -l)
+            LINES_ADDED=$(git diff --numstat "$BEFORE_SHA" "$CURRENT_SHA" | awk '{add+=$1} END {print add+0}')
+            LINES_DELETED=$(git diff --numstat "$BEFORE_SHA" "$CURRENT_SHA" | awk '{del+=$2} END {print del+0}')
+          else
+            FILES_CHANGED=$(git show --pretty="" --name-only "$CURRENT_SHA" | wc -l)
+            LINES_ADDED=$(git show --numstat --format="" "$CURRENT_SHA" | awk '{add+=$1} END {print add+0}')
+            LINES_DELETED=$(git show --numstat --format="" "$CURRENT_SHA" | awk '{del+=$2} END {print del+0}')
+          fi
 
-          FILES_CHANGED=$(git diff --name-only HEAD~1 | wc -l)
-
-          LINES_ADDED=$(git diff --numstat HEAD~1 | awk '{add+=$1} END {print add}')
-          LINES_DELETED=$(git diff --numstat HEAD~1 | awk '{del+=$2} END {print del}')
-
+          FILES_CHANGED=$(echo "$FILES_CHANGED" | tr -d '[:space:]')
+          LINES_ADDED=$(echo "$LINES_ADDED" | tr -d '[:space:]')
+          LINES_DELETED=$(echo "$LINES_DELETED" | tr -d '[:space:]')
           CODE_CHURN=$((LINES_ADDED + LINES_DELETED))
-
           COMMIT_HOUR=$(date +%H)
           COMMIT_DAY=$(date +%u)
 
-          echo "FILES_CHANGED=$FILES_CHANGED" >> $GITHUB_ENV
-          echo "LINES_ADDED=$LINES_ADDED" >> $GITHUB_ENV
-          echo "LINES_DELETED=$LINES_DELETED" >> $GITHUB_ENV
-          echo "CODE_CHURN=$CODE_CHURN" >> $GITHUB_ENV
-          echo "COMMIT_HOUR=$COMMIT_HOUR" >> $GITHUB_ENV
-          echo "COMMIT_DAY=$COMMIT_DAY" >> $GITHUB_ENV
+          echo "files_changed=$FILES_CHANGED" >> "$GITHUB_OUTPUT"
+          echo "lines_added=$LINES_ADDED" >> "$GITHUB_OUTPUT"
+          echo "lines_deleted=$LINES_DELETED" >> "$GITHUB_OUTPUT"
+          echo "code_churn=$CODE_CHURN" >> "$GITHUB_OUTPUT"
+          echo "commit_hour=$COMMIT_HOUR" >> "$GITHUB_OUTPUT"
+          echo "commit_day=$COMMIT_DAY" >> "$GITHUB_OUTPUT"
 
       - name: Call local INTELLI-CI API
         id: predict
         env:
           FILES_CHANGED: ${{ steps.features.outputs.files_changed }}
+          LINES_ADDED: ${{ steps.features.outputs.lines_added }}
+          LINES_DELETED: ${{ steps.features.outputs.lines_deleted }}
+          CODE_CHURN: ${{ steps.features.outputs.code_churn }}
+          COMMIT_HOUR: ${{ steps.features.outputs.commit_hour }}
+          COMMIT_DAY: ${{ steps.features.outputs.commit_day }}
         run: |
-          python -c "import json, os; from app import app; client = app.test_client(); files_changed = int(os.environ['FILES_CHANGED']); payload = {'files_changed': files_changed, 'lines_added': 10, 'lines_deleted': 5, 'code_churn': 15, 'commit_hour': 12, 'commit_day': 2, 'historical_failure_rate': 0.1, 'is_weekend': 0, 'large_commit_flag': 0, 'recent_failure_flag': 0, 'execution_time': 15}; response = client.post('/predict', json=payload); assert response.status_code == 200, response.get_data(as_text=True); data = response.get_json(); open('prediction.json', 'w', encoding='utf-8').write(json.dumps(data)); print(json.dumps(data))"
+          python -c "import json, os; from app import app; client = app.test_client(); payload = {'files_changed': int(os.environ['FILES_CHANGED']), 'lines_added': int(os.environ['LINES_ADDED']), 'lines_deleted': int(os.environ['LINES_DELETED']), 'code_churn': int(os.environ['CODE_CHURN']), 'commit_hour': int(os.environ['COMMIT_HOUR']), 'commit_day': int(os.environ['COMMIT_DAY']), 'historical_failure_rate': 0.1, 'is_weekend': 1 if int(os.environ['COMMIT_DAY']) >= 6 else 0, 'large_commit_flag': 1 if int(os.environ['CODE_CHURN']) > 400 else 0, 'recent_failure_flag': 0, 'execution_time': 15}; response = client.post('/predict', json=payload); assert response.status_code == 200, response.get_data(as_text=True); data = response.get_json(); open('prediction.json', 'w', encoding='utf-8').write(json.dumps(data)); print(json.dumps(data))"
 
       - name: Parse decision
         id: decision

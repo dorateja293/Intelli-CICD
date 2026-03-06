@@ -195,6 +195,13 @@ try:
         (commit_sha, files_changed, code_churn, historical_failure_rate,
          failure_probability, decision)
         VALUES (%s, %s, %s, %s, %s, %s)
+        ON CONFLICT (commit_sha) DO UPDATE
+        SET files_changed = EXCLUDED.files_changed,
+            code_churn = EXCLUDED.code_churn,
+            historical_failure_rate = EXCLUDED.historical_failure_rate,
+            failure_probability = EXCLUDED.failure_probability,
+            decision = EXCLUDED.decision,
+            created_at = NOW()
         """,
         (
             commit.sha,
