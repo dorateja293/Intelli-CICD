@@ -147,17 +147,3 @@ Reinforcement learning for adaptive thresholds
 Docker-based deployment
 
 Cloud deployment (AWS / Azure)
-
-🎓 Learning Outcomes
-
-CI/CD pipeline optimization
-
-Feature engineering
-
-ML classification modeling
-
-Backend API development
-
-Decision engine design
-
-GitHub workflow integration
