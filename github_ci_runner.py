@@ -65,11 +65,14 @@ try:
         print("WARN: Unable to check workflow runs.")
 
     commit = commits[0]
-    files = list(commit.files)
 
-    files_changed = len(files)
-    lines_added = sum(changed_file.additions for changed_file in files)
-    lines_deleted = sum(changed_file.deletions for changed_file in files)
+    files_changed = 0
+    lines_added = 0
+    lines_deleted = 0
+    for f in commit.files:
+        files_changed += 1
+        lines_added += f.additions
+        lines_deleted += f.deletions
 
     code_churn = lines_added + lines_deleted
 
@@ -91,6 +94,9 @@ except Exception as e:
 # FROM DATABASE
 # ============================
 
+conn = None
+cur = None
+
 try:
     conn = psycopg2.connect(
         dbname=DB_NAME,
@@ -104,27 +110,33 @@ try:
 
     cur.execute(
         """
-        SELECT failure_probability
-        FROM commit_history
-        ORDER BY created_at DESC
-        LIMIT 20
+        SELECT COALESCE(AVG(failure_probability), 0)
+        FROM (
+            SELECT failure_probability
+            FROM commit_history
+            ORDER BY created_at DESC
+            LIMIT 20
+        ) recent
         """
     )
 
-    rows = cur.fetchall()
-
-    if len(rows) == 0:
-        historical_failure_rate = 0
-    else:
-        probs = [r[0] for r in rows]
-        historical_failure_rate = sum(probs) / len(probs)
-
-    cur.close()
-    conn.close()
+    historical_failure_rate = cur.fetchone()[0]
 
 except Exception as e:
     print("WARN: Could not compute historical failure rate:", e)
     historical_failure_rate = 0
+    if cur is not None:
+        try:
+            cur.close()
+        except Exception:
+            pass
+    if conn is not None:
+        try:
+            conn.close()
+        except Exception:
+            pass
+    conn = None
+    cur = None
 
 
 # Placeholder for future logic
@@ -179,14 +191,14 @@ except Exception as e:
 # ============================
 
 try:
-    conn = psycopg2.connect(
-        dbname=DB_NAME,
-        user=DB_USER,
-        password=DB_PASSWORD,
-        host=DB_HOST,
-        port=DB_PORT,
-    )
-
+    if conn is None:
+        conn = psycopg2.connect(
+            dbname=DB_NAME,
+            user=DB_USER,
+            password=DB_PASSWORD,
+            host=DB_HOST,
+            port=DB_PORT,
+        )
     cur = conn.cursor()
 
     cur.execute(

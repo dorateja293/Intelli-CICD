@@ -37,12 +37,10 @@ jobs:
         run: |
           if [ -n "$BEFORE_SHA" ] && [ "$BEFORE_SHA" != "0000000000000000000000000000000000000000" ] && git cat-file -e "$BEFORE_SHA^{commit}" 2>/dev/null; then
             FILES_CHANGED=$(git diff --name-only "$BEFORE_SHA" "$CURRENT_SHA" | wc -l)
-            LINES_ADDED=$(git diff --numstat "$BEFORE_SHA" "$CURRENT_SHA" | awk '{add+=$1} END {print add+0}')
-            LINES_DELETED=$(git diff --numstat "$BEFORE_SHA" "$CURRENT_SHA" | awk '{del+=$2} END {print del+0}')
+            read -r LINES_ADDED LINES_DELETED <<< "$(git diff --numstat "$BEFORE_SHA" "$CURRENT_SHA" | awk '{add+=$1; del+=$2} END {print add+0, del+0}')"
           else
             FILES_CHANGED=$(git show --pretty="" --name-only "$CURRENT_SHA" | wc -l)
-            LINES_ADDED=$(git show --numstat --format="" "$CURRENT_SHA" | awk '{add+=$1} END {print add+0}')
-            LINES_DELETED=$(git show --numstat --format="" "$CURRENT_SHA" | awk '{del+=$2} END {print del+0}')
+            read -r LINES_ADDED LINES_DELETED <<< "$(git show --numstat --format="" "$CURRENT_SHA" | awk '{add+=$1; del+=$2} END {print add+0, del+0}')"
           fi
 
           FILES_CHANGED=$(echo "$FILES_CHANGED" | tr -d '[:space:]')

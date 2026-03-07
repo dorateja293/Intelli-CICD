@@ -92,8 +92,7 @@ def predict():
         if error:
             return jsonify({"error": error}), 400
 
-        features_df = pd.DataFrame([data], columns=FEATURE_COLUMNS)
-        features_df = features_df.apply(pd.to_numeric, errors="raise")
+        features_df = pd.DataFrame([data], columns=FEATURE_COLUMNS).astype(float)
 
         probability = model.predict_proba(features_df)[0][1]
 
