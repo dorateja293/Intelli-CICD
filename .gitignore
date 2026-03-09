@@ -1,4 +1,40 @@
+# ── Secrets ───────────────────────────────────────────────────────────────────
 .env
+backend/.env
+frontend/.env
+*.env.local
+
+# ── Python ─────────────────────────────────────────────────────────────────────
 venv/
+.venv/
 __pycache__/
 *.pyc
+*.pyo
+*.pyd
+*.egg-info/
+dist/
+build/
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+test.db
+*.db
+
+# ── Node / Frontend ───────────────────────────────────────────────────────────
+node_modules/
+frontend/dist/
+frontend/.env.local
+*.log
+npm-debug.log*
+
+# ── ML artefacts ──────────────────────────────────────────────────────────────
+ml-engine/models/
+*.pkl
+*.joblib
+
+# ── Editor / OS ───────────────────────────────────────────────────────────────
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/
+*.swp
