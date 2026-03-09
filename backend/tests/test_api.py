@@ -87,7 +87,13 @@ async def test_login_unknown_email(client):
 # ── /predict ──────────────────────────────────────────────────────────────────
 
 async def test_predict_returns_decision(client):
-    resp = await client.post("/predict", json={
+    signup = await client.post("/signup", json={
+        "name": "Predict User",
+        "email": "predict1@example.com",
+        "password": "securepass3",
+    })
+    token = signup.json()["token"]
+    resp = await client.post("/predict", headers={"Authorization": f"Bearer {token}"}, json={
         "files_changed": 15,
         "lines_added": 500,
         "lines_deleted": 80,
@@ -110,7 +116,13 @@ async def test_predict_returns_decision(client):
 
 async def test_predict_low_risk(client):
     """A trivial docs-only commit should lean toward SKIP_TESTS."""
-    resp = await client.post("/predict", json={
+    signup = await client.post("/signup", json={
+        "name": "Predict User2",
+        "email": "predict2@example.com",
+        "password": "securepass4",
+    })
+    token = signup.json()["token"]
+    resp = await client.post("/predict", headers={"Authorization": f"Bearer {token}"}, json={
         "files_changed": 1,
         "lines_added": 3,
         "lines_deleted": 1,

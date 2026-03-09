@@ -4,6 +4,7 @@ GET /analytics/timeline — Daily commit counts for the last N days.
 GET /repositories — List repositories linked to the authenticated user.
 """
 from datetime import datetime, timedelta, timezone
+import uuid
 
 from fastapi import APIRouter, Depends
 from sqlalchemy import Date, cast, func, select
@@ -23,15 +24,16 @@ async def analytics_summary(
     db: AsyncSession = Depends(get_db),
     uid: str = Depends(get_current_user_id),
 ):
+    user_uuid = uuid.UUID(uid)
     # Count predictions belonging to this user directly (manual + webhook via user_id)
     total_result = await db.execute(
-        select(func.count()).select_from(Prediction).where(Prediction.user_id == uid)
+        select(func.count()).select_from(Prediction).where(Prediction.user_id == user_uuid)
     )
     total = total_result.scalar() or 0
 
     skipped_result = await db.execute(
         select(func.count()).select_from(Prediction).where(
-            Prediction.user_id == uid,
+            Prediction.user_id == user_uuid,
             Prediction.decision == "SKIP_TESTS",
         )
     )
@@ -39,7 +41,7 @@ async def analytics_summary(
 
     partial_result = await db.execute(
         select(func.count()).select_from(Prediction).where(
-            Prediction.user_id == uid,
+            Prediction.user_id == user_uuid,
             Prediction.decision == "PARTIAL_TESTS",
         )
     )
@@ -48,7 +50,7 @@ async def analytics_summary(
     executed = total - skipped
 
     avg_prob_result = await db.execute(
-        select(func.avg(Prediction.failure_probability)).where(Prediction.user_id == uid)
+        select(func.avg(Prediction.failure_probability)).where(Prediction.user_id == user_uuid)
     )
     avg_prob = float(avg_prob_result.scalar() or 0)
 
@@ -68,6 +70,7 @@ async def analytics_timeline(
     db: AsyncSession = Depends(get_db),
     uid: str = Depends(get_current_user_id),
 ):
+    user_uuid = uuid.UUID(uid)
     since = datetime.now(timezone.utc) - timedelta(days=days)
 
     day_col = cast(Commit.created_at, Date).label("day")
@@ -76,7 +79,7 @@ async def analytics_timeline(
         select(day_col, func.count().label("commits"))
         .join(Repository, Commit.repository_id == Repository.id)
         .where(
-            Repository.owner_id == uid,
+            Repository.owner_id == user_uuid,
             Commit.created_at >= since,
         )
         .group_by(day_col)
@@ -104,7 +107,7 @@ async def list_repositories(
 ):
     result = await db.execute(
         select(Repository)
-        .where(Repository.owner_id == uid)
+        .where(Repository.owner_id == uuid.UUID(uid))
         .order_by(Repository.created_at.desc())
         .limit(100)
     )

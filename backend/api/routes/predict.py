@@ -118,13 +118,14 @@ async def get_commits(
 ):
     limit = min(max(1, limit), 500)
     offset = max(0, offset)
+    user_uuid = uuid.UUID(uid)
 
     # Total count scoped to this user's repos
     total_result = await db.execute(
         select(func.count())
         .select_from(Commit)
         .join(Repository, Commit.repository_id == Repository.id)
-        .where(Repository.owner_id == uid)
+        .where(Repository.owner_id == user_uuid)
     )
     total = total_result.scalar() or 0
 
@@ -133,7 +134,7 @@ async def get_commits(
         select(Commit, Prediction)
         .join(Repository, Commit.repository_id == Repository.id)
         .outerjoin(Prediction, Prediction.commit_id == Commit.id)
-        .where(Repository.owner_id == uid)
+        .where(Repository.owner_id == user_uuid)
         .order_by(desc(Commit.created_at))
         .limit(limit)
         .offset(offset)

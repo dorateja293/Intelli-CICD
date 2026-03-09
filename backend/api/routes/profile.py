@@ -49,7 +49,7 @@ async def get_profile(
     db: AsyncSession = Depends(get_db),
     uid: str = Depends(get_current_user_id),
 ):
-    result = await db.execute(select(User).where(User.id == uid))
+    result = await db.execute(select(User).where(User.id == uuid.UUID(uid)))
     user = result.scalar_one_or_none()
     if not user:
         raise HTTPException(status_code=404, detail="User not found")
@@ -72,7 +72,7 @@ async def update_profile(
     if not name:
         raise HTTPException(status_code=400, detail="Name cannot be empty")
 
-    result = await db.execute(select(User).where(User.id == uid))
+    result = await db.execute(select(User).where(User.id == uuid.UUID(uid)))
     user = result.scalar_one_or_none()
     if not user:
         raise HTTPException(status_code=404, detail="User not found")
@@ -97,7 +97,7 @@ async def change_password(
     if len(body.new_password) < 8:
         raise HTTPException(status_code=400, detail="New password must be at least 8 characters")
 
-    result = await db.execute(select(User).where(User.id == uid))
+    result = await db.execute(select(User).where(User.id == uuid.UUID(uid)))
     user = result.scalar_one_or_none()
     if not user:
         raise HTTPException(status_code=404, detail="User not found")
@@ -126,7 +126,7 @@ async def connect_repository(
     existing = await db.execute(
         select(Repository).where(
             Repository.full_name == full_name,
-            Repository.owner_id == uid,
+            Repository.owner_id == uuid.UUID(uid),
         )
     )
     if existing.scalar_one_or_none():
@@ -140,7 +140,7 @@ async def connect_repository(
         full_name=full_name,
         default_branch=body.default_branch,
         description=body.description,
-        owner_id=uid,
+        owner_id=uuid.UUID(uid),
     )
     db.add(repo)
     await db.commit()
@@ -168,7 +168,7 @@ async def delete_repository(
         raise HTTPException(status_code=400, detail="Invalid repository ID")
 
     result = await db.execute(
-        select(Repository).where(Repository.id == repo_uuid, Repository.owner_id == uid)
+        select(Repository).where(Repository.id == repo_uuid, Repository.owner_id == uuid.UUID(uid))
     )
     repo = result.scalar_one_or_none()
     if not repo:
