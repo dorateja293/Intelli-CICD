@@ -27,7 +27,7 @@ export default function DashboardLayout() {
         <div className="flex flex-col flex-1 overflow-hidden min-w-0">
           <TopBar />
           <main className="flex-1 overflow-y-auto fade-in">
-            <div className="max-w-7xl mx-auto px-6 py-6">
+            <div className="max-w-7xl mx-auto px-8 py-24">
               <Outlet />
             </div>
           </main>

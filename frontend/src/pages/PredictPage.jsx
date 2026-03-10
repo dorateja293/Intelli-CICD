@@ -3,9 +3,9 @@ import { Zap, ChevronDown, ChevronUp, AlertTriangle, CheckCircle, Activity } fro
 import { predictService, getErrorMessage } from '../services/api'
 
 const DECISION_META = {
-  SKIP_TESTS:    { label: 'SKIP TESTS',    bg: '#1a3a1e', color: '#3fb950', border: '#255130', icon: CheckCircle },
-  RUN_TESTS:     { label: 'RUN TESTS',     bg: '#3d1a1a', color: '#f85149', border: '#6e2020', icon: AlertTriangle },
-  PARTIAL_TESTS: { label: 'PARTIAL TESTS', bg: '#2a2a0a', color: '#e3b341', border: '#5c4a00', icon: Activity },
+  SKIP_TESTS:    { label: 'SKIP TESTS',    bg: '#2ea04326', color: '#3fb950', border: '#3fb95040', icon: CheckCircle },
+  RUN_TESTS:     { label: 'RUN TESTS',     bg: '#f8514926', color: '#f85149', border: '#f8514940', icon: AlertTriangle },
+  PARTIAL_TESTS: { label: 'PARTIAL TESTS', bg: '#d2992226', color: '#d29922', border: '#d2992240', icon: Activity },
 }
 
 const DEFAULT_FORM = {
@@ -28,9 +28,9 @@ const DEFAULT_FORM = {
 function Field({ label, id, type = 'number', value, onChange, hint }) {
   return (
     <div className="flex flex-col gap-2">
-      <label htmlFor={id} className="text-sm font-medium" style={{ color: '#E6EDF3' }}>
+      <label htmlFor={id} className="text-sm font-medium text-[var(--color-text-primary)]">
         {label}
-        {hint && <span className="ml-1.5 text-xs font-normal" style={{ color: '#8B949E' }}>{hint}</span>}
+        {hint && <span className="ml-1.5 text-xs font-normal text-[var(--color-text-secondary)]">{hint}</span>}
       </label>
       <input
         id={id}
@@ -38,8 +38,7 @@ function Field({ label, id, type = 'number', value, onChange, hint }) {
         step={type === 'number' ? 'any' : undefined}
         value={value}
         onChange={(e) => onChange(type === 'number' ? parseFloat(e.target.value) || 0 : e.target.value)}
-        className="w-full px-4 py-2.5 rounded-lg border text-sm outline-none transition-colors focus:border-[#388bfd]"
-        style={{ background: '#0D1117', borderColor: '#30363D', color: '#E6EDF3', minHeight: '46px' }}
+        className="w-full px-4 py-2.5 rounded-lg border text-sm outline-none transition-all duration-200 bg-[#0d1117] text-[var(--color-text-primary)] border-[#30363d] min-h-[48px] focus:border-[#2ea043] focus:ring-1 focus:ring-[#2ea043] hover:border-[#8b949e]"
       />
     </div>
   )
@@ -48,17 +47,15 @@ function Field({ label, id, type = 'number', value, onChange, hint }) {
 function Toggle({ label, id, value, onChange }) {
   return (
     <div className="flex items-center justify-between">
-      <label htmlFor={id} className="text-sm font-medium" style={{ color: '#E6EDF3' }}>{label}</label>
+      <label htmlFor={id} className="text-sm font-medium text-[var(--color-text-primary)]">{label}</label>
       <button
         id={id}
         type="button"
         onClick={() => onChange(value ? 0 : 1)}
-              className="relative w-11 h-6 sm:w-10 sm:h-5 rounded-full transition-colors duration-200 min-w-[44px] min-h-[24px] shrink-0"
-        style={{ background: value ? '#238636' : '#30363D' }}
+        className={`relative w-11 h-6 sm:w-10 sm:h-5 rounded-full transition-colors duration-200 min-w-[44px] min-h-[24px] shrink-0 ${value ? 'bg-[#2ea043]' : 'bg-[#21262d] border border-[#30363d]'}`}
       >
         <span
-          className="absolute top-0.5 w-4 h-4 rounded-full transition-transform duration-200"
-          style={{ background: '#E6EDF3', transform: value ? 'translateX(22px)' : 'translateX(2px)' }}
+          className={`absolute top-0.5 w-5 h-5 rounded-full bg-[#e6edf3] shadow-sm transition-transform duration-200 ${value ? 'translate-x-[22px]' : 'translate-x-0.5'}`}
         />
       </button>
     </div>
@@ -66,17 +63,17 @@ function Toggle({ label, id, value, onChange }) {
 }
 
 function RiskBar({ probability }) {
-  const pct = Math.round(probability * 100)
-  const color = pct >= 55 ? '#f85149' : pct >= 30 ? '#e3b341' : '#3fb950'
+  const pct = probability != null ? (probability * 100).toFixed(0) : 0
+  const color = pct >= 55 ? '#f85149' : pct >= 30 ? '#d29922' : '#3fb950'
   return (
     <div>
-      <div className="flex justify-between text-sm mb-1.5">
-        <span style={{ color: '#8B949E' }}>Failure probability</span>
+      <div className="flex justify-between text-sm mb-1.5 font-medium">
+        <span className="text-[var(--color-text-secondary)]">Failure probability</span>
         <span className="font-mono font-bold" style={{ color }}>{pct}%</span>
       </div>
-      <div className="h-2 rounded-full overflow-hidden" style={{ background: '#21262D' }}>
+      <div className="h-2 rounded-full overflow-hidden bg-[#21262d]">
         <div
-          className="h-full rounded-full transition-all duration-500"
+          className="h-full rounded-full transition-all duration-500 shadow-[0_0_8px_currentColor] opacity-90"
           style={{ width: `${pct}%`, background: color }}
         />
       </div>
@@ -156,11 +153,10 @@ export default function PredictPage() {
             {/* Advanced section */}
             <button
               type="button"
-              className="flex items-center gap-1.5 text-xs transition-colors hover:text-[#388bfd]"
-              style={{ color: '#8B949E' }}
+              className="flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wider text-[var(--color-text-secondary)] transition-colors hover:text-[#58a6ff]"
               onClick={() => setShowAdvanced((v) => !v)}
             >
-              {showAdvanced ? <ChevronUp size={13} /> : <ChevronDown size={13} />}
+              {showAdvanced ? <ChevronUp size={14} strokeWidth={2.5} /> : <ChevronDown size={14} strokeWidth={2.5} />}
               Advanced options
             </button>
 
@@ -172,22 +168,21 @@ export default function PredictPage() {
                   <Field label="Days since failure"  id="dsf" value={form.days_since_last_failure}   onChange={set('days_since_last_failure')} />
                 </div>
                 <div>
-                  <label className="text-sm font-medium block mb-1.5" style={{ color: '#E6EDF3' }}>
-                    Changed files <span className="text-xs font-normal" style={{ color: '#8B949E' }}>(one per line)</span>
+                  <label className="text-sm font-medium block mb-1.5 text-[var(--color-text-primary)]">
+                    Changed files <span className="text-xs font-normal text-[var(--color-text-secondary)]">(one per line)</span>
                   </label>
                   <textarea
                     rows={4}
                     value={form.changed_files}
                     onChange={(e) => set('changed_files')(e.target.value)}
-                    className="w-full px-4 py-2.5 rounded-lg border text-sm font-mono outline-none resize-none focus:border-[#388bfd]"
-                    style={{ background: '#0D1117', borderColor: '#30363D', color: '#E6EDF3' }}
+                    className="w-full px-4 py-3 rounded-lg border text-sm font-mono outline-none resize-none bg-[#0d1117] text-[var(--color-text-primary)] border-[#30363d] focus:border-[#2ea043] focus:ring-1 focus:ring-[#2ea043] hover:border-[#8b949e]"
                   />
                 </div>
               </div>
             )}
 
             {error && (
-              <p className="text-xs rounded-md border px-3 py-2" style={{ color: '#f85149', background: '#3d1a1a', borderColor: '#6e2020' }}>
+              <p className="text-sm rounded-md border px-4 py-3 bg-[#f8514926] text-[#f85149] border-[#f8514940]">
                 {error}
               </p>
             )}
@@ -195,10 +190,9 @@ export default function PredictPage() {
             <button
               type="submit"
               disabled={loading}
-              className="w-full flex items-center justify-center gap-2 py-3 rounded-lg font-semibold text-sm min-h-[50px] transition-all duration-200 hover:opacity-90 disabled:opacity-50 active:scale-[0.98]"
-              style={{ background: '#238636', color: '#fff' }}
+              className="w-full flex items-center justify-center gap-2 py-3 rounded-lg font-semibold text-sm min-h-[48px] transition-all duration-200 bg-[#2ea043] text-white shadow-sm hover:bg-[#238636] disabled:opacity-50 active:scale-[0.98]"
             >
-              <Zap size={14} />
+              <Zap size={16} strokeWidth={2} />
               {loading ? 'Predicting...' : 'Run Prediction'}
             </button>
           </form>
@@ -214,35 +208,35 @@ export default function PredictPage() {
 
           {!result && !loading && (
             <div className="flex-1 flex flex-col items-center justify-center text-center gap-4 py-16">
-              <Zap size={32} style={{ color: '#30363D' }} />
-              <p className="text-sm" style={{ color: '#8B949E' }}>Fill in the form and run a prediction</p>
+              <Zap size={36} className="text-[#30363d]" />
+              <p className="text-sm font-medium text-[var(--color-text-secondary)]">Fill in the form and run a prediction</p>
             </div>
           )}
 
           {loading && (
-            <div className="flex-1 flex flex-col items-center justify-center gap-3 py-12">
-              <div className="w-8 h-8 rounded-full border-2 border-t-transparent animate-spin" style={{ borderColor: '#3fb950' }} />
-              <p className="text-sm" style={{ color: '#8B949E' }}>Analyzing commit...</p>
+            <div className="flex-1 flex flex-col items-center justify-center gap-3 py-16">
+              <div className="w-8 h-8 rounded-full border-2 border-t-transparent animate-spin border-[#58a6ff]" />
+              <p className="text-sm font-medium text-[var(--color-text-secondary)]">Analyzing commit...</p>
             </div>
           )}
 
           {result && !loading && (
-            <div className="space-y-5">
+            <div className="space-y-6">
               {/* Decision badge */}
               <div
-                className="flex items-center gap-3 rounded-xl border p-4"
-                style={{ background: dm.bg + '80', borderColor: dm.color + '40' }}
+                className="flex items-center gap-4 rounded-xl border p-5 shadow-sm"
+                style={{ background: dm.bg, borderColor: dm.border }}
               >
-                <dm.icon size={22} style={{ color: dm.color }} />
+                <dm.icon size={26} style={{ color: dm.color }} />
                 <div>
-                  <p className="text-xs font-medium uppercase tracking-wider mb-0.5" style={{ color: dm.color + 'bb' }}>Decision</p>
-                  <p className="text-xl font-bold" style={{ color: dm.color }}>{dm.label}</p>
+                  <p className="text-xs font-semibold uppercase tracking-widest mb-0.5" style={{ color: dm.color }}>Decision</p>
+                  <p className="text-2xl font-bold tracking-tight" style={{ color: dm.color }}>{dm.label}</p>
                 </div>
               </div>
 
               <RiskBar probability={result.failure_probability} />
 
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 {[
                   { label: 'ML Confidence',   value: `${(result.ml_confidence * 100).toFixed(1)}%` },
                   { label: 'LLM Risk',         value: result.llm_risk_level },
@@ -250,31 +244,29 @@ export default function PredictPage() {
                 ].map((m) => (
                   <div
                     key={m.label}
-                    className="rounded-lg p-3 border"
-                    style={{ background: '#21262D', borderColor: '#30363D' }}
+                    className="rounded-lg p-4 border bg-[#0d1117] border-[#30363d]"
                   >
-                    <p className="text-xs mb-1" style={{ color: '#8B949E' }}>{m.label}</p>
-                    <p className="font-semibold text-sm" style={{ color: '#E6EDF3' }}>{m.value}</p>
+                    <p className="text-xs font-medium mb-1 text-[var(--color-text-secondary)]">{m.label}</p>
+                    <p className="font-semibold text-sm text-[var(--color-text-primary)]">{m.value}</p>
                   </div>
                 ))}
               </div>
 
               {result.reasoning && (
-                <div className="rounded-lg p-3 border" style={{ background: '#21262D', borderColor: '#30363D' }}>
-                  <p className="text-xs font-semibold mb-1.5" style={{ color: '#8B949E' }}>Reasoning</p>
-                  <p className="text-sm leading-relaxed" style={{ color: '#E6EDF3' }}>{result.reasoning}</p>
+                <div className="rounded-lg p-5 border bg-[#0d1117] border-[#30363d]">
+                  <p className="text-xs font-semibold uppercase tracking-wider mb-2 text-[var(--color-text-secondary)]">Reasoning</p>
+                  <p className="text-sm leading-relaxed text-[var(--color-text-primary)]">{result.reasoning}</p>
                 </div>
               )}
 
               {result.affected_modules?.length > 0 && (
                 <div>
-                  <p className="text-xs font-semibold mb-2" style={{ color: '#8B949E' }}>Affected modules</p>
-                  <div className="flex flex-wrap gap-1.5">
+                  <p className="text-xs font-semibold uppercase tracking-wider mb-2 text-[var(--color-text-secondary)]">Affected modules</p>
+                  <div className="flex flex-wrap gap-2">
                     {result.affected_modules.map((m) => (
                       <span
                         key={m}
-                        className="px-2 py-0.5 rounded-md text-xs font-mono border"
-                        style={{ background: '#1a2d4a', color: '#79c0ff', borderColor: '#1f3a5f' }}
+                        className="px-2.5 py-1 rounded-md text-xs font-mono font-medium border bg-[#1f2328] text-[#c9d1d9] border-[#30363d]"
                       >
                         {m}
                       </span>
@@ -285,10 +277,10 @@ export default function PredictPage() {
 
               {result.partial_test_paths?.length > 0 && (
                 <div>
-                  <p className="text-xs font-semibold mb-2" style={{ color: '#8B949E' }}>Partial test paths</p>
-                  <div className="space-y-1">
+                  <p className="text-xs font-semibold uppercase tracking-wider mb-2 text-[var(--color-text-secondary)]">Partial test paths</p>
+                  <div className="space-y-1.5">
                     {result.partial_test_paths.map((p) => (
-                      <p key={p} className="text-xs font-mono px-2 py-1 rounded" style={{ background: '#21262D', color: '#e3b341' }}>
+                      <p key={p} className="text-xs font-mono px-3 py-1.5 rounded-md border bg-[#d2992226] text-[#d29922] border-[#d2992240]">
                         {p}
                       </p>
                     ))}

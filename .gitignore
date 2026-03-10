@@ -38,3 +38,7 @@ Thumbs.db
 .idea/
 .vscode/
 *.swp
+
+# Lint report artifacts
+frontend/*.json
+frontend/*.txt

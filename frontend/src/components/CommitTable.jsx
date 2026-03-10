@@ -31,6 +31,23 @@ function SkeletonRow() {
   )
 }
 
+function SortIcon({ col, sortKey, sortDir }) {
+  if (sortKey !== col) return <ChevronUp size={12} style={{ opacity: 0.3 }} />
+  return sortDir === 'asc' ? <ChevronUp size={12} /> : <ChevronDown size={12} />
+}
+
+function Col({ col, label, sortKey, sortDir, onSort }) {
+  return (
+    <th
+      className="px-5 py-4 text-left text-xs font-semibold uppercase tracking-wide cursor-pointer select-none hover:text-[#E6EDF3] transition-colors"
+      style={{ color: '#8B949E' }}
+      onClick={() => onSort(col)}
+    >
+      <span className="flex items-center gap-1">{label} <SortIcon col={col} sortKey={sortKey} sortDir={sortDir} /></span>
+    </th>
+  )
+}
+
 export default function CommitTable({ commits = [], loading = false }) {
   const [search, setSearch] = useState('')
   const [filter, setFilter] = useState('ALL')
@@ -66,21 +83,6 @@ export default function CommitTable({ commits = [], loading = false }) {
     if (sortKey === key) setSortDir((d) => (d === 'asc' ? 'desc' : 'asc'))
     else { setSortKey(key); setSortDir('asc') }
   }
-
-  const SortIcon = ({ col }) => {
-    if (sortKey !== col) return <ChevronUp size={12} style={{ opacity: 0.3 }} />
-    return sortDir === 'asc' ? <ChevronUp size={12} /> : <ChevronDown size={12} />
-  }
-
-  const Col = ({ col, label }) => (
-    <th
-      className="px-5 py-4 text-left text-xs font-semibold uppercase tracking-wide cursor-pointer select-none hover:text-[#E6EDF3] transition-colors"
-      style={{ color: '#8B949E' }}
-      onClick={() => handleSort(col)}
-    >
-      <span className="flex items-center gap-1">{label} <SortIcon col={col} /></span>
-    </th>
-  )
 
   return (
     <div className="panel">
@@ -122,12 +124,12 @@ export default function CommitTable({ commits = [], loading = false }) {
         <table className="w-full text-sm" style={{ background: 'var(--color-bg-primary)' }}>
           <thead style={{ background: 'var(--color-bg-secondary)' }}>
             <tr style={{ borderBottom: '1px solid var(--color-border)' }}>
-              <Col col="commit_sha" label="Commit SHA" />
-              <Col col="files_changed" label="Files" />
-              <Col col="code_churn" label="Churn" />
-              <Col col="failure_probability" label="Failure %" />
+              <Col col="commit_sha" label="Commit SHA" sortKey={sortKey} sortDir={sortDir} onSort={handleSort} />
+              <Col col="files_changed" label="Files" sortKey={sortKey} sortDir={sortDir} onSort={handleSort} />
+              <Col col="code_churn" label="Churn" sortKey={sortKey} sortDir={sortDir} onSort={handleSort} />
+              <Col col="failure_probability" label="Failure %" sortKey={sortKey} sortDir={sortDir} onSort={handleSort} />
               <th className="px-5 py-4 text-left text-xs font-semibold uppercase tracking-wide" style={{ color: '#8B949E' }}>Decision</th>
-              <Col col="created_at" label="Timestamp" />
+              <Col col="created_at" label="Timestamp" sortKey={sortKey} sortDir={sortDir} onSort={handleSort} />
             </tr>
           </thead>
           <tbody>

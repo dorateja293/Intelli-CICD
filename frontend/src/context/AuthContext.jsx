@@ -1,18 +1,13 @@
-import { createContext, useContext, useState, useEffect } from 'react'
+/* eslint-disable react-refresh/only-export-components */
+import { createContext, useContext, useState } from 'react'
 
 const AuthContext = createContext(null)
 
 export function AuthProvider({ children }) {
-  const [user, setUser] = useState(null)
-  const [loading, setLoading] = useState(true)
-
-  useEffect(() => {
-    const stored = localStorage.getItem('ici_user')
-    if (stored) {
-      try { setUser(JSON.parse(stored)) } catch { /* ignore */ }
-    }
-    setLoading(false)
-  }, [])
+  const [user, setUser] = useState(() => {
+    try { return JSON.parse(localStorage.getItem('ici_user') ?? 'null') } catch { return null }
+  })
+  const loading = false
 
   const login = (userData, token) => {
     localStorage.setItem('ici_token', token)

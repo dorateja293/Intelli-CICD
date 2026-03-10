@@ -85,17 +85,16 @@ export default function ProjectsPage() {
           <form onSubmit={handleConnect} className="p-6 space-y-5">
             {connectError && (
               <div
-                className="flex items-center gap-2 px-4 py-2.5 rounded-lg text-sm"
-                style={{ background: '#3d1a1a', color: '#f85149', border: '1px solid #f8514944' }}
+                className="flex items-center gap-2 px-4 py-3 rounded-md text-sm bg-[#f8514926] text-[#f85149] border border-[#f8514940]"
               >
-                <AlertCircle size={15} />
+                <AlertCircle size={16} strokeWidth={2} />
                 {connectError}
               </div>
             )}
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div>
-                <label className="block text-xs font-semibold mb-1.5" style={{ color: '#8B949E' }}>
-                  Repository <span style={{ color: '#f85149' }}>*</span>
+                <label className="block text-xs font-semibold mb-1.5 uppercase tracking-wider text-[var(--color-text-secondary)]">
+                  Repository <span className="text-[#f85149]">*</span>
                 </label>
                 <input
                   type="text"
@@ -103,12 +102,11 @@ export default function ProjectsPage() {
                   onChange={(e) => setFullName(e.target.value)}
                   placeholder="owner/repository"
                   required
-                  className="w-full px-4 py-2.5 rounded-lg text-sm border bg-transparent outline-none transition-colors"
-                  style={{ borderColor: '#30363D', color: '#E6EDF3' }}
+                  className="w-full px-4 py-2.5 rounded-lg text-sm border bg-[#0d1117] outline-none transition-all duration-200 text-[var(--color-text-primary)] border-[#30363d] focus:border-[#2ea043] focus:ring-1 focus:ring-[#2ea043] hover:border-[#8b949e]"
                 />
               </div>
               <div>
-                <label className="block text-xs font-semibold mb-1.5" style={{ color: '#8B949E' }}>
+                <label className="block text-xs font-semibold mb-1.5 uppercase tracking-wider text-[var(--color-text-secondary)]">
                   Default branch
                 </label>
                 <input
@@ -116,22 +114,20 @@ export default function ProjectsPage() {
                   value={branch}
                   onChange={(e) => setBranch(e.target.value)}
                   placeholder="main"
-                  className="w-full px-4 py-2.5 rounded-lg text-sm border bg-transparent outline-none transition-colors"
-                  style={{ borderColor: '#30363D', color: '#E6EDF3' }}
+                  className="w-full px-4 py-2.5 rounded-lg text-sm border bg-[#0d1117] outline-none transition-all duration-200 text-[var(--color-text-primary)] border-[#30363d] focus:border-[#2ea043] focus:ring-1 focus:ring-[#2ea043] hover:border-[#8b949e]"
                 />
               </div>
             </div>
             <div>
-              <label className="block text-xs font-semibold mb-1.5" style={{ color: '#8B949E' }}>
-                Description <span className="font-normal">(optional)</span>
+              <label className="block text-xs font-semibold mb-1.5 uppercase tracking-wider text-[var(--color-text-secondary)]">
+                Description <span className="font-normal normal-case">(optional)</span>
               </label>
               <input
                 type="text"
                 value={description}
                 onChange={(e) => setDescription(e.target.value)}
                 placeholder="Short description of the repository"
-                className="w-full px-4 py-2.5 rounded-lg text-sm border bg-transparent outline-none transition-colors"
-                style={{ borderColor: '#30363D', color: '#E6EDF3' }}
+                className="w-full px-4 py-2.5 rounded-lg text-sm border bg-[#0d1117] outline-none transition-all duration-200 text-[var(--color-text-primary)] border-[#30363d] focus:border-[#2ea043] focus:ring-1 focus:ring-[#2ea043] hover:border-[#8b949e]"
               />
             </div>
             <div className="flex items-center gap-3 pt-1">
@@ -141,8 +137,7 @@ export default function ProjectsPage() {
               <button
                 type="button"
                 onClick={() => setShowForm(false)}
-                className="px-4 py-2 rounded-lg text-sm transition-colors"
-                style={{ color: '#8B949E' }}
+                className="px-4 py-2.5 rounded-lg text-sm transition-colors font-medium text-[var(--color-text-secondary)] hover:bg-[#21262d] hover:text-white"
               >
                 Cancel
               </button>
@@ -155,10 +150,10 @@ export default function ProjectsPage() {
       <div className="panel">
         <div className="panel-header">
           <div className="flex items-center gap-2">
-            <FolderGit2 size={14} style={{ color: '#8B949E' }} />
+            <FolderGit2 size={16} className="text-[var(--color-text-secondary)]" />
             <h2 className="section-title">Connected repositories</h2>
           </div>
-          <span className="text-xs" style={{ color: '#8B949E' }}>
+          <span className="text-xs font-medium text-[var(--color-text-secondary)]">
             {repos.length} repo{repos.length !== 1 ? 's' : ''}
           </span>
         </div>
@@ -170,36 +165,36 @@ export default function ProjectsPage() {
             ))}
           </div>
         ) : error ? (
-          <div className="p-8 text-center text-sm" style={{ color: '#f85149' }}>
+          <div className="p-8 text-center text-sm text-[#f85149]">
             {error}
           </div>
         ) : repos.length === 0 ? (
-          <div className="p-12 text-center">
-            <FolderGit2 size={36} className="mx-auto mb-3 opacity-30" style={{ color: '#8B949E' }} />
-            <p className="text-sm font-medium" style={{ color: '#E6EDF3' }}>No repositories connected</p>
-            <p className="text-xs mt-1" style={{ color: '#8B949E' }}>
+          <div className="p-12 text-center flex flex-col items-center">
+            <FolderGit2 size={40} className="mb-4 text-[#30363d]" strokeWidth={1.5} />
+            <p className="text-sm font-medium text-[var(--color-text-primary)]">No repositories connected</p>
+            <p className="text-sm mt-1.5 text-[var(--color-text-secondary)] max-w-sm mx-auto">
               Click "Connect repo" to link a GitHub repository and start optimizing your CI pipeline.
             </p>
           </div>
         ) : (
-          <ul className="divide-y" style={{ borderColor: '#21262D' }}>
+          <ul className="divide-y divide-[#30363d] bg-transparent">
             {repos.map((repo) => (
               <li
                 key={repo.id}
-                className="flex items-center gap-4 px-5 py-4 transition-colors hover:bg-[#0D1117]"
+                className="flex items-center gap-4 px-6 py-5 transition-colors hover:bg-[#21262d]"
               >
-                <FolderGit2 size={16} style={{ color: '#8B949E', flexShrink: 0 }} />
+                <FolderGit2 size={18} className="text-[#2f81f7] flex-shrink-0" strokeWidth={2} />
                 <div className="flex-1 min-w-0">
-                  <p className="font-medium text-sm truncate" style={{ color: '#E6EDF3' }}>
+                  <p className="font-semibold text-sm truncate text-[var(--color-text-primary)]">
                     {repo.full_name}
                   </p>
-                  <div className="flex items-center gap-3 mt-0.5">
-                    <span className="flex items-center gap-1 text-xs" style={{ color: '#8B949E' }}>
-                      <GitBranch size={11} />
+                  <div className="flex items-center gap-3 mt-1">
+                    <span className="flex items-center gap-1.5 text-xs font-medium text-[var(--color-text-secondary)]">
+                      <GitBranch size={12} strokeWidth={2} className="text-[var(--color-text-secondary)]" />
                       {repo.default_branch}
                     </span>
                     {repo.description && (
-                      <span className="text-xs truncate" style={{ color: '#8B949E' }}>
+                      <span className="text-xs truncate text-[var(--color-text-secondary)]">
                         {repo.description}
                       </span>
                     )}
@@ -208,11 +203,10 @@ export default function ProjectsPage() {
                 <button
                   type="button"
                   onClick={() => handleDelete(repo.id, repo.full_name)}
-                  className="ml-auto p-1.5 rounded-md transition-colors hover:bg-[#3d1a1a]"
-                  style={{ color: '#8B949E' }}
+                  className="ml-auto p-2 rounded-lg transition-colors text-[var(--color-text-secondary)] hover:text-[#f85149] hover:bg-[#f8514926]"
                   title="Remove repository"
                 >
-                  <Trash2 size={14} />
+                  <Trash2 size={16} strokeWidth={2} />
                 </button>
               </li>
             ))}

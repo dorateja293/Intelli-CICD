@@ -7,26 +7,26 @@ export default function ProjectCard({
   onDelete,
 }) {
   return (
-    <div className="bg-[#161b22] border border-[#30363d] rounded-xl p-6 panel-hover">
+    <div className="bg-white border border-slate-200 rounded-2xl p-6 transition-all duration-300 hover:shadow-lg hover:-translate-y-1 group">
       <div className="flex items-start justify-between gap-3">
         <div className="min-w-0">
-          <h3 className="font-semibold text-[var(--color-text-primary)] truncate">{project.name}</h3>
-          <p className="text-sm text-[var(--color-text-secondary)] mt-2 truncate">{project.repo}</p>
+          <h3 className="font-bold text-lg text-slate-900 truncate group-hover:text-indigo-600 transition-colors">{project.name}</h3>
+          <p className="text-sm text-slate-500 mt-1 truncate">{project.repo}</p>
         </div>
         <div className="text-right">
-          <p className="text-xs text-[var(--color-text-secondary)]">Skip rate</p>
-          <p className="font-mono text-sm text-[var(--color-text-primary)]">{project.skipRate ?? '—'}</p>
+          <p className="text-xs font-semibold uppercase tracking-wider text-slate-400">Skip rate</p>
+          <p className="font-mono text-base font-bold text-emerald-600 mt-1">{project.skipRate ?? '—'}</p>
         </div>
       </div>
 
-      <div className="mt-5 pt-4 border-t border-[#30363d] grid grid-cols-2 gap-3 text-xs text-[var(--color-text-secondary)]">
+      <div className="mt-6 pt-5 border-t border-slate-100 grid grid-cols-2 gap-4 text-xs">
         <div>
-          <p>Total commits</p>
-          <p className="font-mono text-[var(--color-text-primary)] mt-1">{project.totalCommits ?? '—'}</p>
+          <p className="font-semibold uppercase tracking-wider text-slate-400">Total commits</p>
+          <p className="font-mono text-sm font-semibold text-slate-700 mt-1.5">{project.totalCommits ?? '—'}</p>
         </div>
         <div>
-          <p>Updated</p>
-          <p className="font-mono text-[var(--color-text-primary)] mt-1">{project.updatedAt ?? '—'}</p>
+          <p className="font-semibold uppercase tracking-wider text-slate-400">Updated</p>
+          <p className="font-mono text-sm font-semibold text-slate-700 mt-1.5">{project.updatedAt ?? '—'}</p>
         </div>
       </div>
 

@@ -31,10 +31,10 @@ Error: Could not connect to PostgreSQL`,
 }
 
 const SEVERITY_META = {
-  critical: { color: '#f85149', bg: '#3d1a1a', border: '#6e2020', icon: AlertOctagon,  label: 'Critical' },
-  high:     { color: '#f0883e', bg: '#3d2a1a', border: '#6e4a20', icon: AlertTriangle, label: 'High' },
-  medium:   { color: '#e3b341', bg: '#2a2a0a', border: '#5c4a00', icon: Info,          label: 'Medium' },
-  low:      { color: '#3fb950', bg: '#1a3a1e', border: '#255130', icon: CheckCircle,   label: 'Low' },
+  critical: { color: '#f85149', bg: '#f8514926', border: '#f8514940', icon: AlertOctagon,  label: 'Critical' },
+  high:     { color: '#d29922', bg: '#d2992226', border: '#d2992240', icon: AlertTriangle, label: 'High' },
+  medium:   { color: '#58a6ff', bg: '#58a6ff26', border: '#58a6ff40', icon: Info,          label: 'Medium' },
+  low:      { color: '#3fb950', bg: '#2ea04326', border: '#3fb95040', icon: CheckCircle,   label: 'Low' },
 }
 
 export default function LogAnalyzerPage() {
@@ -82,13 +82,12 @@ export default function LogAnalyzerPage() {
           <p className="page-sub">Paste CI log output to classify the error and get actionable fix suggestions</p>
         </div>
         <div className="flex items-center gap-2 flex-wrap justify-end">
-          <span className="text-xs" style={{ color: '#8B949E' }}>Try sample:</span>
+          <span className="text-xs font-medium text-[var(--color-text-secondary)]">Try sample:</span>
           {Object.keys(SAMPLE_LOGS).map((k) => (
             <button
               key={k}
               onClick={() => loadSample(k)}
-              className="text-xs px-2.5 py-1 rounded-md border transition-colors hover:border-[#388bfd]"
-              style={{ background: '#21262D', borderColor: '#30363D', color: '#8B949E' }}
+              className="text-xs px-2.5 py-1 rounded-md border font-medium bg-[#21262d] border-[#30363d] text-[var(--color-text-secondary)] transition-colors hover:border-[#8b949e] hover:text-[var(--color-text-primary)] shadow-sm"
             >
               {k}
             </button>
@@ -102,7 +101,7 @@ export default function LogAnalyzerPage() {
         <div className="panel">
           <div className="panel-header">
             <h2 className="section-title">CI Log Input</h2>
-            <span className="text-xs" style={{ color: '#8B949E' }}>{logText.split('\n').filter(Boolean).length} lines</span>
+            <span className="text-xs font-medium text-[var(--color-text-secondary)]">{logText.split('\n').filter(Boolean).length} lines</span>
           </div>
           <div className="p-5 flex flex-col gap-4">
             <textarea
@@ -110,12 +109,12 @@ export default function LogAnalyzerPage() {
               value={logText}
               onChange={(e) => { setLogText(e.target.value); setResult(null) }}
               placeholder="Paste your CI log output here..."
-              className="w-full font-mono text-xs rounded-lg border px-4 py-3 outline-none resize-none focus:border-[#388bfd] transition-colors"
-              style={{ background: '#0D1117', borderColor: '#30363D', color: '#E6EDF3', lineHeight: 1.65 }}
+              className="w-full font-mono text-xs rounded-lg border px-4 py-3 outline-none resize-none bg-[#0d1117] border-[#30363d] text-[var(--color-text-primary)] focus:border-[#58a6ff] focus:ring-1 focus:ring-[#58a6ff] transition-all duration-200 hover:border-[#8b949e]"
+              style={{ lineHeight: 1.65 }}
             />
 
             {error && (
-              <p className="text-xs rounded-md border px-3 py-2" style={{ color: '#f85149', background: '#3d1a1a', borderColor: '#6e2020' }}>
+              <p className="text-sm rounded-md border px-4 py-3 bg-[#f8514926] text-[#f85149] border-[#f8514940]">
                 {error}
               </p>
             )}
@@ -123,10 +122,10 @@ export default function LogAnalyzerPage() {
             <button
               onClick={handleAnalyze}
               disabled={loading || !logText.trim()}
-              className="flex items-center justify-center gap-2 py-3 rounded-lg font-semibold text-sm transition-all duration-200 hover:opacity-90 disabled:opacity-40"
-              style={{ background: '#238636', color: '#fff', minHeight: '50px' }}
+              className="flex items-center justify-center gap-2 py-3 rounded-lg font-semibold text-sm transition-all duration-200 bg-[#2ea043] text-white hover:bg-[#238636] disabled:opacity-50"
+              style={{ minHeight: '48px' }}
             >
-              <Search size={14} />
+              <Search size={16} strokeWidth={2} />
               {loading ? 'Analyzing...' : 'Analyze Log'}
             </button>
           </div>
@@ -141,40 +140,40 @@ export default function LogAnalyzerPage() {
 
             {!result && !loading && (
               <div className="flex flex-col items-center justify-center text-center gap-4 py-20">
-                <Search size={32} style={{ color: '#30363D' }} />
-                <p className="text-sm" style={{ color: '#8B949E' }}>Analyze a log to see results</p>
+                <Search size={36} className="text-[#30363d]" />
+                <p className="text-sm font-medium text-[var(--color-text-secondary)]">Analyze a log to see results</p>
               </div>
             )}
 
             {loading && (
               <div className="flex flex-col items-center justify-center gap-4 py-20">
-                <div className="w-8 h-8 rounded-full border-2 border-t-transparent animate-spin" style={{ borderColor: '#388bfd' }} />
-                <p className="text-sm" style={{ color: '#8B949E' }}>Scanning log patterns...</p>
+                <div className="w-8 h-8 rounded-full border-2 border-t-transparent animate-spin border-[#58a6ff]" />
+                <p className="text-sm font-medium text-[var(--color-text-secondary)]">Scanning log patterns...</p>
               </div>
             )}
 
             {result && !loading && (
-              <div className="space-y-5">
+              <div className="space-y-6">
 
                 {/* Error type + severity */}
                 <div
-                  className="flex items-center gap-3 rounded-xl border p-4"
+                  className="flex items-center gap-4 rounded-xl border p-5 shadow-sm"
                   style={{ background: sm.bg, borderColor: sm.border }}
                 >
-                  <sm.icon size={20} style={{ color: sm.color }} />
+                  <sm.icon size={26} style={{ color: sm.color }} />
                   <div className="flex-1 min-w-0">
-                    <div className="flex items-center gap-2 flex-wrap">
+                    <div className="flex items-center gap-2 flex-wrap mb-1.5">
                       <span
-                        className="text-xs font-semibold uppercase tracking-wider px-2 py-0.5 rounded-full border"
+                        className="text-[11px] font-bold uppercase tracking-wider px-2.5 py-0.5 rounded-md border"
                         style={{ color: sm.color, borderColor: sm.border, background: sm.bg }}
                       >
                         {sm.label}
                       </span>
-                      <span className="text-xs font-mono px-2 py-0.5 rounded" style={{ background: '#21262D', color: '#8B949E' }}>
+                      <span className="text-xs font-mono font-medium px-2 py-0.5 rounded-md bg-[#21262d] text-[var(--color-text-secondary)] border border-[#30363d]">
                         {result.error_type.replace(/_/g, ' ')}
                       </span>
                     </div>
-                    <p className="text-sm font-medium mt-1.5 leading-snug" style={{ color: '#E6EDF3' }}>
+                    <p className="text-sm font-semibold leading-snug text-[var(--color-text-primary)]">
                       {result.root_cause}
                     </p>
                   </div>
@@ -182,36 +181,35 @@ export default function LogAnalyzerPage() {
 
                 {/* Confidence */}
                 <div>
-                  <div className="flex justify-between text-xs mb-1.5">
-                    <span style={{ color: '#8B949E' }}>Classification confidence</span>
-                    <span className="font-mono font-semibold" style={{ color: '#E6EDF3' }}>
+                  <div className="flex justify-between text-xs mb-1.5 font-medium">
+                    <span className="text-[var(--color-text-secondary)]">Classification confidence</span>
+                    <span className="font-mono font-bold text-[var(--color-text-primary)]">
                       {(result.confidence * 100).toFixed(0)}%
                     </span>
                   </div>
-                  <div className="h-1.5 rounded-full" style={{ background: '#21262D' }}>
+                  <div className="h-2 rounded-full bg-[#21262d]">
                     <div
-                      className="h-full rounded-full"
+                      className="h-full rounded-full transition-all duration-500 shadow-[0_0_8px_currentColor] opacity-90"
                       style={{ width: `${result.confidence * 100}%`, background: sm.color }}
                     />
                   </div>
                 </div>
 
                 {/* Suggested fix */}
-                <div className="rounded-lg border" style={{ background: '#21262D', borderColor: '#30363D' }}>
-                  <div className="flex items-center justify-between px-3 py-2.5 border-b" style={{ borderColor: '#30363D' }}>
-                    <span className="text-xs font-semibold" style={{ color: '#E6EDF3' }}>Suggested Fix</span>
+                <div className="rounded-xl border bg-[#0d1117] border-[#30363d]">
+                  <div className="flex items-center justify-between px-4 py-3 border-b border-[#30363d]">
+                    <span className="text-xs font-semibold uppercase tracking-wider text-[var(--color-text-secondary)]">Suggested Fix</span>
                     <button
                       onClick={copyFix}
-                      className="flex items-center gap-1.5 text-xs transition-colors hover:text-[#388bfd]"
-                      style={{ color: '#8B949E' }}
+                      className="flex items-center gap-1.5 text-xs font-medium text-[#2f81f7] hover:text-[#58a6ff] transition-colors"
                     >
-                      <Clipboard size={12} />
+                      <Clipboard size={14} />
                       {copied ? 'Copied!' : 'Copy'}
                     </button>
                   </div>
-                  <div className="px-3 py-3">
+                  <div className="px-5 py-4">
                     {result.suggested_fix.split('\n').map((line, i) => (
-                      <p key={i} className="text-sm leading-relaxed" style={{ color: line.match(/^\d\./) ? '#E6EDF3' : '#8B949E' }}>
+                      <p key={i} className={`text-sm leading-relaxed mb-1 last:mb-0 ${line.match(/^\d\./) ? 'text-[var(--color-text-primary)] font-medium' : 'text-[var(--color-text-secondary)]'}`}>
                         {line}
                       </p>
                     ))}
@@ -221,15 +219,15 @@ export default function LogAnalyzerPage() {
                 {/* Matched lines */}
                 {result.matched_lines?.length > 0 && (
                   <div>
-                    <p className="text-xs font-semibold mb-2" style={{ color: '#8B949E' }}>
+                    <p className="text-xs font-semibold uppercase tracking-wider mb-2 text-[var(--color-text-secondary)]">
                       Matched log lines ({result.matched_lines.length})
                     </p>
-                    <div className="rounded-md border overflow-hidden" style={{ borderColor: '#30363D' }}>
+                    <div className="rounded-xl border overflow-hidden border-[#30363d]">
                       {result.matched_lines.map((line, i) => (
                         <p
                           key={i}
-                          className="px-3 py-1.5 text-xs font-mono border-b last:border-0 truncate"
-                          style={{ background: '#0D1117', borderColor: '#21262D', color: sm.color }}
+                          className="px-4 py-2.5 text-xs font-mono border-b border-[#30363d] last:border-0 truncate font-medium bg-[#161b22]"
+                          style={{ color: sm.color }}
                         >
                           {line}
                         </p>

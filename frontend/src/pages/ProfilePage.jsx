@@ -10,7 +10,7 @@ export default function ProfilePage() {
 
   // Profile form state
   const [name, setName] = useState(user?.name ?? '')
-  const [email, setEmail] = useState(user?.email ?? '')
+  const email = user?.email ?? ''
   const [profileMsg, setProfileMsg] = useState(null)
   const [profileLoading, setProfileLoading] = useState(false)
 
