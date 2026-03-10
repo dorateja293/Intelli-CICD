@@ -41,7 +41,7 @@ export default function FormInput({
         autoComplete={autoComplete}
         aria-invalid={!!error}
         aria-describedby={error ? `${id}-error` : undefined}
-        className={`w-full px-4 py-2.5 rounded-lg border text-sm outline-none transition-colors duration-150 bg-[#0d1117] text-[var(--color-text-primary)] min-h-[46px] focus:border-[var(--color-accent)] focus:ring-1 focus:ring-[var(--color-accent)] ${error ? 'border-[var(--color-error)]' : 'border-[#30363d]'}`}
+        className={`w-full px-4 py-3 rounded-lg border text-sm outline-none transition-colors duration-150 bg-[#0d1117] text-[var(--color-text-primary)] min-h-[48px] focus:border-[var(--color-accent)] focus:ring-1 focus:ring-[var(--color-accent)] ${error ? 'border-[var(--color-error)]' : 'border-[#30363d]'}`}
       />
       {error && (
         <p

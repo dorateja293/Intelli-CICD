@@ -66,10 +66,10 @@ export default function SignupPage() {
         >
           <Cpu size={22} style={{ color: 'var(--color-success)' }} strokeWidth={1.5} />
         </div>
-        <h1 className="text-2xl font-bold tracking-tight" style={{ color: 'var(--color-text-primary)' }}>
+        <h1 className="text-2xl font-bold tracking-tight text-center" style={{ color: 'var(--color-text-primary)' }}>
           Create account
         </h1>
-        <p className="text-sm mt-1.5" style={{ color: 'var(--color-text-secondary)' }}>
+        <p className="text-sm mt-1.5 text-center" style={{ color: 'var(--color-text-secondary)' }}>
           Join INTELLI-CI today
         </p>
       </div>
@@ -85,8 +85,8 @@ export default function SignupPage() {
           </div>
         )}
 
-        <div className="p-7 sm:p-8">
-        <form onSubmit={handleSubmit} className="flex flex-col gap-5">
+        <div className="p-8 sm:p-10">
+        <form onSubmit={handleSubmit} className="flex flex-col gap-6">
           <FormInput
             id="name"
             label="Full Name"
@@ -118,8 +118,8 @@ export default function SignupPage() {
                 value={form.password}
                 onChange={set('password')}
                 autoComplete="new-password"
-                className="w-full px-4 py-2.5 pr-12 rounded-lg border text-sm outline-none transition-colors focus:border-[#388bfd]"
-                style={{ background: '#0D1117', borderColor: errors.password ? '#f85149' : '#30363D', color: '#E6EDF3', minHeight: '46px' }}
+                className="w-full px-4 py-3 pr-12 rounded-lg border text-sm outline-none transition-colors focus:border-[#388bfd]"
+                style={{ background: '#0D1117', borderColor: errors.password ? '#f85149' : '#30363D', color: '#E6EDF3', minHeight: '48px' }}
               />
               <button
                 type="button"

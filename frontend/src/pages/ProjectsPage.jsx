@@ -66,7 +66,7 @@ export default function ProjectsPage() {
   return (
     <div className="max-w-4xl mx-auto space-y-5 sm:space-y-6 fade-in">
       {/* Header */}
-      <div className="flex items-start justify-between gap-4">
+      <div className="flex items-center justify-between gap-4">
         <div>
           <h1 className="page-title">Projects</h1>
           <p className="page-sub">Connect GitHub repositories to optimize CI pipeline decisions</p>

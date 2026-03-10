@@ -75,8 +75,8 @@ export default function LogAnalyzerPage() {
   const sm = result ? (SEVERITY_META[result.severity] ?? SEVERITY_META.medium) : null
 
   return (
-    <div className="max-w-6xl mx-auto space-y-8 fade-in">
-      <div className="flex items-start justify-between gap-4">
+    <div className="max-w-[1100px] mx-auto space-y-8 fade-in">
+      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-6">
         <div>
           <h1 className="page-title">CI Log Analyzer</h1>
           <p className="page-sub">Paste CI log output to classify the error and get actionable fix suggestions</p>
@@ -87,7 +87,7 @@ export default function LogAnalyzerPage() {
             <button
               key={k}
               onClick={() => loadSample(k)}
-              className="text-xs px-2.5 py-1 rounded-md border font-medium bg-[#21262d] border-[#30363d] text-[var(--color-text-secondary)] transition-colors hover:border-[#8b949e] hover:text-[var(--color-text-primary)] shadow-sm"
+              className="text-sm px-3 py-1.5 rounded-md border font-medium bg-[#21262d] border-[#30363d] text-[var(--color-text-secondary)] transition-colors hover:border-[#8b949e] hover:text-[var(--color-text-primary)] shadow-sm"
             >
               {k}
             </button>

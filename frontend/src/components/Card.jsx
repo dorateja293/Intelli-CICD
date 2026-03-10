@@ -15,7 +15,7 @@ export default function Card({
   if (loading) {
     return (
       <div
-        className={`bg-[#161b22] border border-[#30363d] rounded-xl p-7 ${className}`}
+        className={`bg-[#161b22] border border-[#30363d] rounded-xl p-8 ${className}`}
       >
         <div className="skeleton h-4 w-28 mb-5" />
         <div className="skeleton h-11 w-24 mb-3" />
@@ -26,10 +26,10 @@ export default function Card({
 
   return (
     <div
-      className={`bg-[#161b22] border border-[#30363d] rounded-xl p-7 card-hover ${className}`}
+      className={`bg-[#161b22] border border-[#30363d] rounded-xl p-8 card-hover ${className}`}
     >
       <div className="flex items-start justify-between gap-3 mb-5">
-        <span className="text-sm font-medium text-[var(--color-text-secondary)] leading-tight">
+        <span className="text-base font-semibold text-[var(--color-text-secondary)] leading-tight">
           {title}
         </span>
         {Icon && (
@@ -46,7 +46,7 @@ export default function Card({
       </div>
       <div className="flex items-center gap-2">
         {subtitle && (
-          <span className="text-sm text-[var(--color-text-secondary)]">{subtitle}</span>
+          <span className="text-base text-[var(--color-text-secondary)]">{subtitle}</span>
         )}
         {trend && (
           <span

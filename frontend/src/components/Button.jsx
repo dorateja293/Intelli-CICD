@@ -14,7 +14,7 @@ export default function Button({
   icon: Icon,
 }) {
   const base =
-    'inline-flex items-center justify-center gap-2 px-5 py-2.5 rounded-lg text-sm font-medium transition-all duration-150 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--color-accent)] disabled:opacity-50 disabled:cursor-not-allowed active:translate-y-px min-h-[44px]'
+    'inline-flex items-center justify-center gap-2 px-6 py-3 rounded-lg text-sm font-medium transition-all duration-150 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--color-accent)] disabled:opacity-50 disabled:cursor-not-allowed active:translate-y-px min-h-[48px]'
 
   const variants = {
     primary: 'bg-[#2ea043] text-white hover:bg-green-600 shadow-sm',

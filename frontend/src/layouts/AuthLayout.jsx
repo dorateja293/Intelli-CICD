@@ -15,7 +15,7 @@ export default function AuthLayout() {
           style={{ background: 'radial-gradient(ellipse, #388bfd 0%, transparent 60%)' }}
         />
       </div>
-      <div className="w-full max-w-sm relative z-10">
+      <div className="w-full max-w-md relative z-10">
         <Outlet />
       </div>
     </div>

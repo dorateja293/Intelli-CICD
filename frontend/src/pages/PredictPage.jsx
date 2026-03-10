@@ -114,7 +114,7 @@ export default function PredictPage() {
   const dm = result ? (DECISION_META[result.decision] ?? DECISION_META.RUN_TESTS) : null
 
   return (
-    <div className="max-w-6xl mx-auto space-y-8 sm:space-y-10 fade-in min-w-0">
+    <div className="max-w-[1100px] mx-auto space-y-8 sm:space-y-10 fade-in min-w-0">
       <div>
         <h1 className="page-title">Manual Prediction</h1>
         <p className="page-sub">Enter commit metrics to get an instant ML + rule-based CI decision</p>

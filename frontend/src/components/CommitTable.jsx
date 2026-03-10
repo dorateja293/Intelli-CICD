@@ -23,7 +23,7 @@ function SkeletonRow() {
   return (
     <tr>
       {[1, 2, 3, 4, 5, 6].map((i) => (
-        <td key={i} className="px-4 py-3">
+        <td key={i} className="px-5 py-5">
           <div className="skeleton h-4 w-full" />
         </td>
       ))}
@@ -39,7 +39,7 @@ function SortIcon({ col, sortKey, sortDir }) {
 function Col({ col, label, sortKey, sortDir, onSort }) {
   return (
     <th
-      className="px-5 py-4 text-left text-xs font-semibold uppercase tracking-wide cursor-pointer select-none hover:text-[#E6EDF3] transition-colors"
+      className="px-5 py-5 text-left text-sm font-semibold uppercase tracking-wide cursor-pointer select-none hover:text-[#E6EDF3] transition-colors"
       style={{ color: '#8B949E' }}
       onClick={() => onSort(col)}
     >
@@ -106,7 +106,7 @@ export default function CommitTable({ commits = [], loading = false }) {
             <button
               key={f}
               onClick={() => { setFilter(f); setPage(1) }}
-              className="px-3 py-1.5 rounded-md text-xs font-medium border transition-colors"
+              className="px-4 py-2 rounded-md text-sm font-medium border transition-colors"
               style={{
                 background: filter === f ? '#21262D' : 'transparent',
                 borderColor: filter === f ? '#444c56' : '#30363D',
@@ -128,7 +128,7 @@ export default function CommitTable({ commits = [], loading = false }) {
               <Col col="files_changed" label="Files" sortKey={sortKey} sortDir={sortDir} onSort={handleSort} />
               <Col col="code_churn" label="Churn" sortKey={sortKey} sortDir={sortDir} onSort={handleSort} />
               <Col col="failure_probability" label="Failure %" sortKey={sortKey} sortDir={sortDir} onSort={handleSort} />
-              <th className="px-5 py-4 text-left text-xs font-semibold uppercase tracking-wide" style={{ color: '#8B949E' }}>Decision</th>
+              <th className="px-5 py-5 text-left text-sm font-semibold uppercase tracking-wide" style={{ color: '#8B949E' }}>Decision</th>
               <Col col="created_at" label="Timestamp" sortKey={sortKey} sortDir={sortDir} onSort={handleSort} />
             </tr>
           </thead>
@@ -138,7 +138,7 @@ export default function CommitTable({ commits = [], loading = false }) {
               : paginated.length === 0
               ? (
                 <tr>
-                  <td colSpan={6} className="px-4 py-10 text-center text-sm" style={{ color: '#8B949E' }}>
+                  <td colSpan={6} className="px-5 py-10 text-center text-sm" style={{ color: '#8B949E' }}>
                     No commits found.
                   </td>
                 </tr>
@@ -149,12 +149,12 @@ export default function CommitTable({ commits = [], loading = false }) {
                   className="border-t transition-colors hover:bg-[#161B22]"
                   style={{ borderColor: '#21262D' }}
                 >
-                  <td className="px-5 py-4 font-mono text-xs" style={{ color: '#79c0ff' }}>
+                  <td className="px-5 py-5 font-mono text-sm" style={{ color: '#79c0ff' }}>
                     {row.commit_sha?.slice(0, 8)}…
                   </td>
-                  <td className="px-5 py-4 text-sm" style={{ color: '#E6EDF3' }}>{row.files_changed ?? '—'}</td>
-                  <td className="px-5 py-4 text-sm" style={{ color: '#E6EDF3' }}>{row.code_churn ?? '—'}</td>
-                  <td className="px-5 py-4">
+                  <td className="px-5 py-5 text-sm" style={{ color: '#E6EDF3' }}>{row.files_changed ?? '—'}</td>
+                  <td className="px-5 py-5 text-sm" style={{ color: '#E6EDF3' }}>{row.code_churn ?? '—'}</td>
+                  <td className="px-5 py-5">
                     <span
                       className="font-mono text-sm"
                       style={{
@@ -166,10 +166,10 @@ export default function CommitTable({ commits = [], loading = false }) {
                         : '—'}
                     </span>
                   </td>
-                  <td className="px-5 py-4">
+                  <td className="px-5 py-5">
                     <DecisionBadge decision={row.decision} />
                   </td>
-                  <td className="px-5 py-4 text-sm" style={{ color: '#8B949E' }}>
+                  <td className="px-5 py-5 text-sm" style={{ color: '#8B949E' }}>
                     {row.created_at
                       ? new Date(row.created_at).toLocaleString()
                       : '—'}

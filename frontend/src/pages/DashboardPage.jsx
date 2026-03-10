@@ -100,7 +100,7 @@ export default function DashboardPage() {
                   {['SHA', 'Decision', 'Risk', 'When'].map((h) => (
                     <th
                       key={h}
-                      className="px-5 py-4 text-left font-semibold uppercase tracking-wider"
+                      className="px-5 py-5 text-left font-semibold uppercase tracking-wider text-xs"
                       style={{ color: '#8B949E' }}
                     >
                       {h}
@@ -113,7 +113,7 @@ export default function DashboardPage() {
                   ? Array.from({ length: 5 }).map((_, i) => (
                       <tr key={i} style={{ borderBottom: '1px solid #21262D' }}>
                         {[1, 2, 3, 4].map((j) => (
-                          <td key={j} className="px-5 py-4">
+                          <td key={j} className="px-5 py-5">
                             <div className="skeleton h-4 w-full" />
                           </td>
                         ))}
@@ -135,10 +135,10 @@ export default function DashboardPage() {
                           className="transition-colors hover:bg-[#21262D]"
                           style={{ borderBottom: '1px solid #21262D' }}
                         >
-                          <td className="px-5 py-4 font-mono text-sm" style={{ color: '#79c0ff' }}>
+                          <td className="px-5 py-5 font-mono text-sm" style={{ color: '#79c0ff' }}>
                             {c.commit_sha?.slice(0, 8)}
                           </td>
-                          <td className="px-5 py-4">
+                          <td className="px-5 py-5">
                             <span
                               className="inline-flex px-2.5 py-1 rounded-full font-semibold text-xs"
                               style={{ background: ds.bg, color: ds.color }}
@@ -147,12 +147,12 @@ export default function DashboardPage() {
                             </span>
                           </td>
                           <td
-                            className="px-5 py-4 font-mono text-sm"
+                            className="px-5 py-5 font-mono text-sm"
                             style={{ color: c.failure_probability > 0.5 ? '#f85149' : '#3fb950' }}
                           >
                             {c.failure_probability != null ? `${(c.failure_probability * 100).toFixed(1)}%` : '—'}
                           </td>
-                          <td className="px-5 py-4 text-sm" style={{ color: '#8B949E' }}>
+                          <td className="px-5 py-5 text-sm" style={{ color: '#8B949E' }}>
                             {c.created_at
                               ? new Date(c.created_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })
                               : '—'}

@@ -61,7 +61,7 @@ export default function ProfilePage() {
     : 'Demo Account'
 
   return (
-    <div className="max-w-3xl mx-auto space-y-7 sm:space-y-8 fade-in">
+    <div className="max-w-3xl mx-auto space-y-10 sm:space-y-12 fade-in">
       {/* Header */}
       <div>
         <h1 className="page-title">Profile</h1>
@@ -94,8 +94,8 @@ export default function ProfilePage() {
               type="email"
               value={email}
               disabled
-              className="w-full px-4 py-2.5 rounded-lg border text-sm cursor-not-allowed opacity-50 min-h-[46px]"
-              style={{ background: '#0D1117', borderColor: '#30363D', color: '#8B949E' }}
+              className="w-full px-4 py-3 rounded-lg border text-sm cursor-not-allowed opacity-75 min-h-[48px]"
+              style={{ background: '#161B22', borderColor: '#30363D', color: '#8B949E' }}
             />
             <p className="text-xs" style={{ color: '#8B949E' }}>Email address cannot be changed.</p>
           </div>

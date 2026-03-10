@@ -63,10 +63,10 @@ export default function LoginPage() {
         >
           <Cpu size={22} style={{ color: 'var(--color-success)' }} strokeWidth={1.5} />
         </div>
-        <h1 className="text-2xl font-bold tracking-tight" style={{ color: 'var(--color-text-primary)' }}>
+        <h1 className="text-2xl font-bold tracking-tight text-center" style={{ color: 'var(--color-text-primary)' }}>
           Sign in
         </h1>
-        <p className="text-sm mt-1.5" style={{ color: 'var(--color-text-secondary)' }}>
+        <p className="text-sm mt-1.5 text-center" style={{ color: 'var(--color-text-secondary)' }}>
           to your INTELLI-CI account
         </p>
       </div>
@@ -82,8 +82,8 @@ export default function LoginPage() {
           </div>
         )}
 
-        <div className="p-7 sm:p-8">
-        <form onSubmit={handleSubmit} className="flex flex-col gap-5">
+        <div className="p-8 sm:p-10">
+        <form onSubmit={handleSubmit} className="flex flex-col gap-6">
           <FormInput
             id="email"
             label="Email address"
@@ -112,12 +112,12 @@ export default function LoginPage() {
                 value={form.password}
                 onChange={set('password')}
                 autoComplete="current-password"
-                className="w-full px-4 py-2.5 pr-12 rounded-lg border text-sm outline-none transition-colors focus:border-[#388bfd]"
+                className="w-full px-4 py-3 pr-12 rounded-lg border text-sm outline-none transition-colors focus:border-[#388bfd]"
                 style={{
                   background: '#0D1117',
                   borderColor: errors.password ? '#f85149' : '#30363D',
                   color: '#E6EDF3',
-                  minHeight: '46px',
+                  minHeight: '48px',
                 }}
               />
               <button

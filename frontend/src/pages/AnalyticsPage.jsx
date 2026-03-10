@@ -78,7 +78,7 @@ export default function AnalyticsPage() {
     : MOCK_TIME_SAVED
 
   return (
-    <div className="max-w-7xl mx-auto space-y-8 sm:space-y-10 fade-in">
+    <div className="max-w-[1400px] mx-auto space-y-8 sm:space-y-10 fade-in">
 
       {/* Page header */}
       <div>
