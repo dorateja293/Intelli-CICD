@@ -1,219 +1,173 @@
-import { useEffect, useState } from 'react'
-import { FolderGit2, Plus, Trash2, GitBranch, AlertCircle } from 'lucide-react'
+import { useState, useEffect } from 'react'
+import { Github, Trash2, GitBranch, Plus, X } from 'lucide-react'
 import { repositoryService, getErrorMessage } from '../services/api'
-import Button from '../components/Button'
 
-export default function ProjectsPage() {
-  const [repos, setRepos] = useState([])
-  const [loading, setLoading] = useState(true)
-  const [error, setError] = useState('')
-
-  // Connect form state
-  const [showForm, setShowForm] = useState(false)
+function ConnectModal({ onClose, onConnected }) {
   const [fullName, setFullName] = useState('')
   const [branch, setBranch] = useState('main')
-  const [description, setDescription] = useState('')
-  const [connecting, setConnecting] = useState(false)
-  const [connectError, setConnectError] = useState('')
+  const [loading, setLoading] = useState(false)
+  const [error, setError] = useState(null)
 
-  const fetchRepos = () => {
-    setLoading(true)
-    repositoryService
-      .list()
-      .then(({ data }) => setRepos(data.repositories ?? []))
-      .catch((err) => setError(getErrorMessage(err, 'Failed to load projects')))
-      .finally(() => setLoading(false))
-  }
-
-  useEffect(fetchRepos, [])
-
-  const handleConnect = async (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault()
-    if (!fullName.trim() || !fullName.includes('/')) {
-      setConnectError('Enter a valid repository name in owner/repo format')
-      return
-    }
-    setConnecting(true)
-    setConnectError('')
+    if (!fullName.trim()) return
+    setError(null)
+    setLoading(true)
     try {
-      await repositoryService.connect({
-        full_name: fullName.trim(),
-        default_branch: branch.trim() || 'main',
-        description: description.trim(),
-      })
-      setFullName('')
-      setBranch('main')
-      setDescription('')
-      setShowForm(false)
-      fetchRepos()
+      const { data } = await repositoryService.connect({ full_name: fullName.trim(), default_branch: branch || 'main' })
+      onConnected(data)
     } catch (err) {
-      setConnectError(getErrorMessage(err, 'Failed to connect repository'))
+      setError(getErrorMessage(err, 'Failed to connect repository.'))
     } finally {
-      setConnecting(false)
-    }
-  }
-
-  const handleDelete = async (repoId, repoName) => {
-    if (!window.confirm(`Remove ${repoName}? This will also delete all associated commits and predictions.`)) return
-    try {
-      await repositoryService.delete(repoId)
-      setRepos((prev) => prev.filter((r) => r.id !== repoId))
-    } catch (err) {
-      alert(getErrorMessage(err, 'Failed to remove project'))
+      setLoading(false)
     }
   }
 
   return (
-    <div className="max-w-4xl mx-auto space-y-5 sm:space-y-6 fade-in">
-      {/* Header */}
-      <div className="flex items-center justify-between gap-4">
-        <div>
-          <h1 className="page-title">Projects</h1>
-          <p className="page-sub">Connect GitHub repositories to optimize CI pipeline decisions</p>
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70" onClick={onClose}>
+      <div className="bg-[#161b22] border border-[#30363d] rounded-xl p-8 w-full max-w-md shadow-2xl" onClick={(e) => e.stopPropagation()}>
+        <div className="flex justify-between items-center mb-6">
+          <h3 className="text-lg font-bold text-[#c9d1d9]">Connect Repository</h3>
+          <button onClick={onClose} className="text-[#8b949e] hover:text-[#c9d1d9]"><X size={20} /></button>
         </div>
-        <Button icon={Plus} onClick={() => { setShowForm((v) => !v); setConnectError('') }}>
-          Connect repo
-        </Button>
-      </div>
-
-      {/* Connect form */}
-      {showForm && (
-        <div className="panel">
-          <div className="panel-header">
-            <h2 className="section-title">Connect a new repository</h2>
+        <form onSubmit={handleSubmit} className="space-y-4">
+          <div>
+            <label className="block text-sm font-medium text-[#c9d1d9] mb-2">Repository (owner/repo)</label>
+            <input
+              value={fullName}
+              onChange={(e) => setFullName(e.target.value)}
+              placeholder="e.g. octocat/hello-world"
+              className="w-full bg-[#0d1117] border border-[#30363d] text-[#c9d1d9] rounded-md px-4 py-2.5 outline-none focus:border-[#2ea043] focus:ring-1 focus:ring-[#2ea043] transition-colors"
+            />
           </div>
-          <form onSubmit={handleConnect} className="p-6 space-y-5">
-            {connectError && (
-              <div
-                className="flex items-center gap-2 px-4 py-3 rounded-md text-sm bg-[#f8514926] text-[#f85149] border border-[#f8514940]"
-              >
-                <AlertCircle size={16} strokeWidth={2} />
-                {connectError}
-              </div>
-            )}
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-              <div>
-                <label className="block text-xs font-semibold mb-1.5 uppercase tracking-wider text-[var(--color-text-secondary)]">
-                  Repository <span className="text-[#f85149]">*</span>
-                </label>
-                <input
-                  type="text"
-                  value={fullName}
-                  onChange={(e) => setFullName(e.target.value)}
-                  placeholder="owner/repository"
-                  required
-                  className="w-full px-4 py-2.5 rounded-lg text-sm border bg-[#0d1117] outline-none transition-all duration-200 text-[var(--color-text-primary)] border-[#30363d] focus:border-[#2ea043] focus:ring-1 focus:ring-[#2ea043] hover:border-[#8b949e]"
-                />
-              </div>
-              <div>
-                <label className="block text-xs font-semibold mb-1.5 uppercase tracking-wider text-[var(--color-text-secondary)]">
-                  Default branch
-                </label>
-                <input
-                  type="text"
-                  value={branch}
-                  onChange={(e) => setBranch(e.target.value)}
-                  placeholder="main"
-                  className="w-full px-4 py-2.5 rounded-lg text-sm border bg-[#0d1117] outline-none transition-all duration-200 text-[var(--color-text-primary)] border-[#30363d] focus:border-[#2ea043] focus:ring-1 focus:ring-[#2ea043] hover:border-[#8b949e]"
-                />
-              </div>
-            </div>
-            <div>
-              <label className="block text-xs font-semibold mb-1.5 uppercase tracking-wider text-[var(--color-text-secondary)]">
-                Description <span className="font-normal normal-case">(optional)</span>
-              </label>
-              <input
-                type="text"
-                value={description}
-                onChange={(e) => setDescription(e.target.value)}
-                placeholder="Short description of the repository"
-                className="w-full px-4 py-2.5 rounded-lg text-sm border bg-[#0d1117] outline-none transition-all duration-200 text-[var(--color-text-primary)] border-[#30363d] focus:border-[#2ea043] focus:ring-1 focus:ring-[#2ea043] hover:border-[#8b949e]"
-              />
-            </div>
-            <div className="flex items-center gap-3 pt-1">
-              <Button type="submit" variant="primary" loading={connecting}>
-                {connecting ? 'Connecting…' : 'Connect repository'}
-              </Button>
-              <button
-                type="button"
-                onClick={() => setShowForm(false)}
-                className="px-4 py-2.5 rounded-lg text-sm transition-colors font-medium text-[var(--color-text-secondary)] hover:bg-[#21262d] hover:text-white"
-              >
-                Cancel
-              </button>
-            </div>
-          </form>
-        </div>
-      )}
-
-      {/* Repository list */}
-      <div className="panel">
-        <div className="panel-header">
-          <div className="flex items-center gap-2">
-            <FolderGit2 size={16} className="text-[var(--color-text-secondary)]" />
-            <h2 className="section-title">Connected repositories</h2>
+          <div>
+            <label className="block text-sm font-medium text-[#c9d1d9] mb-2">Default Branch</label>
+            <input
+              value={branch}
+              onChange={(e) => setBranch(e.target.value)}
+              placeholder="main"
+              className="w-full bg-[#0d1117] border border-[#30363d] text-[#c9d1d9] rounded-md px-4 py-2.5 outline-none focus:border-[#2ea043] focus:ring-1 focus:ring-[#2ea043] transition-colors"
+            />
           </div>
-          <span className="text-xs font-medium text-[var(--color-text-secondary)]">
-            {repos.length} repo{repos.length !== 1 ? 's' : ''}
-          </span>
-        </div>
-
-        {loading ? (
-          <div className="p-5 space-y-3">
-            {Array.from({ length: 3 }).map((_, i) => (
-              <div key={i} className="skeleton h-16 w-full rounded-lg" />
-            ))}
-          </div>
-        ) : error ? (
-          <div className="p-8 text-center text-sm text-[#f85149]">
-            {error}
-          </div>
-        ) : repos.length === 0 ? (
-          <div className="p-12 text-center flex flex-col items-center">
-            <FolderGit2 size={40} className="mb-4 text-[#30363d]" strokeWidth={1.5} />
-            <p className="text-sm font-medium text-[var(--color-text-primary)]">No repositories connected</p>
-            <p className="text-sm mt-1.5 text-[var(--color-text-secondary)] max-w-sm mx-auto">
-              Click "Connect repo" to link a GitHub repository and start optimizing your CI pipeline.
-            </p>
-          </div>
-        ) : (
-          <ul className="divide-y divide-[#30363d] bg-transparent">
-            {repos.map((repo) => (
-              <li
-                key={repo.id}
-                className="flex items-center gap-4 px-6 py-5 transition-colors hover:bg-[#21262d]"
-              >
-                <FolderGit2 size={18} className="text-[#2f81f7] flex-shrink-0" strokeWidth={2} />
-                <div className="flex-1 min-w-0">
-                  <p className="font-semibold text-sm truncate text-[var(--color-text-primary)]">
-                    {repo.full_name}
-                  </p>
-                  <div className="flex items-center gap-3 mt-1">
-                    <span className="flex items-center gap-1.5 text-xs font-medium text-[var(--color-text-secondary)]">
-                      <GitBranch size={12} strokeWidth={2} className="text-[var(--color-text-secondary)]" />
-                      {repo.default_branch}
-                    </span>
-                    {repo.description && (
-                      <span className="text-xs truncate text-[var(--color-text-secondary)]">
-                        {repo.description}
-                      </span>
-                    )}
-                  </div>
-                </div>
-                <button
-                  type="button"
-                  onClick={() => handleDelete(repo.id, repo.full_name)}
-                  className="ml-auto p-2 rounded-lg transition-colors text-[var(--color-text-secondary)] hover:text-[#f85149] hover:bg-[#f8514926]"
-                  title="Remove repository"
-                >
-                  <Trash2 size={16} strokeWidth={2} />
-                </button>
-              </li>
-            ))}
-          </ul>
-        )}
+          {error && <p className="text-sm text-[#f85149] bg-[#3d1a1a] border border-[#6e2020] rounded-lg px-4 py-3">{error}</p>}
+          <button
+            type="submit"
+            disabled={loading || !fullName.trim()}
+            className="w-full bg-[#2ea043] hover:bg-[#2c974b] disabled:opacity-50 text-white font-bold py-3 rounded-lg transition-colors flex justify-center items-center gap-2"
+          >
+            {loading ? <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" /> : 'Connect'}
+          </button>
+        </form>
       </div>
     </div>
   )
 }
 
+export default function ProjectsPage() {
+  const [repos, setRepos] = useState([])
+  const [loading, setLoading] = useState(true)
+  const [error, setError] = useState(null)
+  const [showModal, setShowModal] = useState(false)
+
+  const fetchRepos = async () => {
+    setError(null)
+    try {
+      const { data } = await repositoryService.list()
+      setRepos(data.repositories ?? data ?? [])
+    } catch (err) {
+      setError(getErrorMessage(err, 'Failed to load repositories.'))
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  useEffect(() => { fetchRepos() }, [])
+
+  const handleDelete = async (id) => {
+    try {
+      await repositoryService.delete(id)
+      setRepos((prev) => prev.filter((r) => r.id !== id))
+    } catch (err) {
+      alert(getErrorMessage(err, 'Failed to delete repository.'))
+    }
+  }
+
+  const handleConnected = (repo) => {
+    setRepos((prev) => [repo, ...prev])
+    setShowModal(false)
+  }
+
+  return (
+    <div className="max-w-7xl mx-auto space-y-8 fade-in">
+      {showModal && <ConnectModal onClose={() => setShowModal(false)} onConnected={handleConnected} />}
+
+      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+        <div>
+          <h1 className="page-title">Projects</h1>
+          <p className="page-sub">Manage connected repositories and view high-level metrics</p>
+        </div>
+        <button
+          onClick={() => setShowModal(true)}
+          className="px-4 py-2 bg-[#2ea043] hover:bg-[#2c974b] text-white font-medium rounded-lg shadow-sm transition-colors flex items-center gap-2"
+        >
+          <Plus size={18} />
+          Connect Repository
+        </button>
+      </div>
+
+      {error && (
+        <p className="text-sm text-[#f85149] bg-[#3d1a1a] border border-[#6e2020] rounded-lg px-4 py-3">{error}</p>
+      )}
+
+      {loading ? (
+        <div className="flex justify-center py-20">
+          <div className="w-8 h-8 border-2 border-[#2ea043]/30 border-t-[#2ea043] rounded-full animate-spin" />
+        </div>
+      ) : repos.length === 0 ? (
+        <div className="text-center py-20 text-[#8b949e] border-2 border-dashed border-[#30363d] rounded-xl bg-[#0d1117]/30">
+          <Github size={48} className="mx-auto text-[#30363d] mb-4" />
+          <p className="font-medium text-[#c9d1d9] mb-1">No repositories connected</p>
+          <p className="text-sm">Click <strong>Connect Repository</strong> to get started.</p>
+        </div>
+      ) : (
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+          {repos.map((repo) => (
+            <div key={repo.id} className="bg-[#161b22] border border-[#30363d] rounded-xl p-6 hover:border-[#8b949e] transition-colors shadow-sm flex flex-col">
+              <div className="flex justify-between items-start mb-6">
+                <div className="flex items-center gap-3">
+                  <div className="w-10 h-10 rounded-lg bg-[#0d1117] border border-[#30363d] flex items-center justify-center shadow-inner">
+                    <Github size={20} className="text-[#c9d1d9]" />
+                  </div>
+                  <div className="min-w-0">
+                    <h3 className="text-base font-bold text-[#c9d1d9] truncate">{repo.full_name?.split('/')[1] ?? repo.full_name}</h3>
+                    <p className="text-[#8b949e] text-xs font-mono truncate">{repo.full_name}</p>
+                  </div>
+                </div>
+              </div>
+
+              <div className="flex items-center gap-2 text-xs text-[#8b949e] bg-[#0d1117] border border-[#30363d]/50 rounded-lg px-3 py-2 mb-6">
+                <GitBranch size={12} className="shrink-0" />
+                <span className="truncate">{repo.default_branch}</span>
+              </div>
+
+              {repo.description && (
+                <p className="text-xs text-[#8b949e] mb-6 leading-relaxed line-clamp-2">{repo.description}</p>
+              )}
+
+              <div className="flex items-center justify-between border-t border-[#30363d] pt-4 mt-auto">
+                <span className="text-xs text-[#8b949e]">{repo.created_at ? new Date(repo.created_at).toLocaleDateString() : ''}</span>
+                <button
+                  onClick={() => handleDelete(repo.id)}
+                  className="p-2 text-[#8b949e] hover:text-[#f85149] transition-colors"
+                  title="Disconnect"
+                >
+                  <Trash2 size={16} />
+                </button>
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
+    </div>
+  )
+}

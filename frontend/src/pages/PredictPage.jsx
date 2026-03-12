@@ -1,295 +1,197 @@
 import { useState } from 'react'
-import { Zap, ChevronDown, ChevronUp, AlertTriangle, CheckCircle, Activity } from 'lucide-react'
-import { predictService, getErrorMessage } from '../services/api'
+import { BrainCircuit, CheckCircle2, AlertTriangle, PlayCircle } from 'lucide-react'
+import { predictService } from '../services/api'
+import { getErrorMessage } from '../services/api'
 
-const DECISION_META = {
-  SKIP_TESTS:    { label: 'SKIP TESTS',    bg: '#2ea04326', color: '#3fb950', border: '#3fb95040', icon: CheckCircle },
-  RUN_TESTS:     { label: 'RUN TESTS',     bg: '#f8514926', color: '#f85149', border: '#f8514940', icon: AlertTriangle },
-  PARTIAL_TESTS: { label: 'PARTIAL TESTS', bg: '#d2992226', color: '#d29922', border: '#d2992240', icon: Activity },
+const DECISION_STYLE = {
+  SKIP_TESTS:    { color: '#3fb950', bg: '#1a3a1e', border: '#255130', icon: CheckCircle2 },
+  RUN_TESTS:     { color: '#f85149', bg: '#3d1a1a', border: '#6e2020', icon: AlertTriangle },
+  PARTIAL_TESTS: { color: '#e3b341', bg: '#2a2a0a', border: '#5c4a00', icon: PlayCircle },
 }
 
-const DEFAULT_FORM = {
-  files_changed: 3,
-  lines_added: 45,
-  lines_deleted: 12,
-  code_churn: 57,
-  previous_failures: 0,
-  test_coverage: 80,
-  is_merge_commit: 0,
-  commit_message_length: 60,
-  num_contributors_last_30d: 2,
-  days_since_last_failure: 14,
-  recent_failure_flag: 0,
-  commit_message: 'fix: update user authentication logic',
-  diff: '',
-  changed_files: 'src/auth/user.py\nsrc/api/routes/auth.py',
-}
+const FIELD_CLS = 'w-full bg-[#0d1117] border border-[#30363d] text-[#c9d1d9] rounded-md px-4 py-2.5 outline-none focus:border-[#2ea043] focus:ring-1 focus:ring-[#2ea043] transition-colors'
 
-function Field({ label, id, type = 'number', value, onChange, hint }) {
-  return (
-    <div className="flex flex-col gap-2">
-      <label htmlFor={id} className="text-sm font-medium text-[var(--color-text-primary)]">
-        {label}
-        {hint && <span className="ml-1.5 text-xs font-normal text-[var(--color-text-secondary)]">{hint}</span>}
-      </label>
-      <input
-        id={id}
-        type={type}
-        step={type === 'number' ? 'any' : undefined}
-        value={value}
-        onChange={(e) => onChange(type === 'number' ? parseFloat(e.target.value) || 0 : e.target.value)}
-        className="w-full px-4 py-2.5 rounded-lg border text-sm outline-none transition-all duration-200 bg-[#0d1117] text-[var(--color-text-primary)] border-[#30363d] min-h-[48px] focus:border-[#2ea043] focus:ring-1 focus:ring-[#2ea043] hover:border-[#8b949e]"
-      />
-    </div>
-  )
-}
-
-function Toggle({ label, id, value, onChange }) {
-  return (
-    <div className="flex items-center justify-between">
-      <label htmlFor={id} className="text-sm font-medium text-[var(--color-text-primary)]">{label}</label>
-      <button
-        id={id}
-        type="button"
-        onClick={() => onChange(value ? 0 : 1)}
-        className={`relative w-11 h-6 sm:w-10 sm:h-5 rounded-full transition-colors duration-200 min-w-[44px] min-h-[24px] shrink-0 ${value ? 'bg-[#2ea043]' : 'bg-[#21262d] border border-[#30363d]'}`}
-      >
-        <span
-          className={`absolute top-0.5 w-5 h-5 rounded-full bg-[#e6edf3] shadow-sm transition-transform duration-200 ${value ? 'translate-x-[22px]' : 'translate-x-0.5'}`}
-        />
-      </button>
-    </div>
-  )
-}
-
-function RiskBar({ probability }) {
-  const pct = probability != null ? (probability * 100).toFixed(0) : 0
-  const color = pct >= 55 ? '#f85149' : pct >= 30 ? '#d29922' : '#3fb950'
+function Field({ label, children }) {
   return (
     <div>
-      <div className="flex justify-between text-sm mb-1.5 font-medium">
-        <span className="text-[var(--color-text-secondary)]">Failure probability</span>
-        <span className="font-mono font-bold" style={{ color }}>{pct}%</span>
-      </div>
-      <div className="h-2 rounded-full overflow-hidden bg-[#21262d]">
-        <div
-          className="h-full rounded-full transition-all duration-500 shadow-[0_0_8px_currentColor] opacity-90"
-          style={{ width: `${pct}%`, background: color }}
-        />
-      </div>
+      <label className="block text-sm font-medium text-[#c9d1d9] mb-2">{label}</label>
+      {children}
     </div>
   )
 }
 
 export default function PredictPage() {
-  const [form, setForm] = useState(DEFAULT_FORM)
-  const [result, setResult] = useState(null)
   const [loading, setLoading] = useState(false)
-  const [error, setError] = useState('')
-  const [showAdvanced, setShowAdvanced] = useState(false)
+  const [result, setResult] = useState(null)
+  const [error, setError] = useState(null)
+  const [form, setForm] = useState({
+    files_changed: '3',
+    lines_added: '45',
+    lines_deleted: '10',
+    previous_failures: '0',
+    test_coverage: '80',
+    is_merge_commit: '0',
+    commit_message: '',
+  })
 
-  const set = (field) => (val) => setForm((f) => ({ ...f, [field]: val }))
+  const set = (field) => (e) => setForm((f) => ({ ...f, [field]: e.target.value }))
 
-  const handleSubmit = async (e) => {
+  const handlePredict = async (e) => {
     e.preventDefault()
-    setError('')
+    setError(null)
     setLoading(true)
     try {
-      const payload = {
-        ...form,
-        changed_files: form.changed_files
-          .split('\n')
-          .map((s) => s.trim())
-          .filter(Boolean),
-      }
-      const { data } = await predictService.predict(payload)
+      const lines_added = parseInt(form.lines_added) || 0
+      const lines_deleted = parseInt(form.lines_deleted) || 0
+      const { data } = await predictService.predict({
+        files_changed: parseInt(form.files_changed) || 0,
+        lines_added,
+        lines_deleted,
+        code_churn: lines_added + lines_deleted,
+        previous_failures: parseInt(form.previous_failures) || 0,
+        test_coverage: parseFloat(form.test_coverage) || 0,
+        is_merge_commit: parseInt(form.is_merge_commit) || 0,
+        commit_message_length: form.commit_message.length,
+        num_contributors_last_30d: 1,
+        days_since_last_failure: 30,
+        recent_failure_flag: parseInt(form.previous_failures) > 0 ? 1 : 0,
+        commit_message: form.commit_message,
+        diff: '',
+        changed_files: [],
+      })
       setResult(data)
     } catch (err) {
-      setError(getErrorMessage(err, 'Prediction failed. Is the backend running?'))
+      setError(getErrorMessage(err, 'Prediction failed. Ensure the backend is running.'))
     } finally {
       setLoading(false)
     }
   }
 
-  const dm = result ? (DECISION_META[result.decision] ?? DECISION_META.RUN_TESTS) : null
+  const ds = result ? (DECISION_STYLE[result.decision] ?? DECISION_STYLE.RUN_TESTS) : null
+  const DecisionIcon = ds?.icon
 
   return (
-    <div className="max-w-[1100px] mx-auto space-y-8 sm:space-y-10 fade-in min-w-0">
+    <div className="max-w-7xl mx-auto space-y-8 fade-in">
       <div>
         <h1 className="page-title">Manual Prediction</h1>
-        <p className="page-sub">Enter commit metrics to get an instant ML + rule-based CI decision</p>
+        <p className="page-sub">Submit commit parameters to get an AI-powered CI decision</p>
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 sm:gap-8 min-w-0">
-
-        {/* ── Form ── */}
-        <div className="panel">
-          <div className="panel-header">
-            <h2 className="section-title">Commit Metrics</h2>
-          </div>
-          <div className="p-6">
-          <form onSubmit={handleSubmit} className="space-y-5">
-
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-              <Field label="Files changed"    id="fc"  value={form.files_changed}    onChange={set('files_changed')} />
-              <Field label="Lines added"      id="la"  value={form.lines_added}      onChange={set('lines_added')} />
-              <Field label="Lines deleted"    id="ld"  value={form.lines_deleted}    onChange={set('lines_deleted')} />
-              <Field label="Code churn"       id="cc"  value={form.code_churn}       onChange={set('code_churn')}   hint="(added+deleted)" />
-              <Field label="Prev. failures"   id="pf"  value={form.previous_failures} onChange={set('previous_failures')} />
-              <Field label="Test coverage %"  id="tc"  value={form.test_coverage}    onChange={set('test_coverage')} />
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+        {/* Left Side: Form */}
+        <div className="bg-[#161b22] border border-[#30363d] rounded-xl p-8 shadow-xl">
+          <h2 className="text-lg font-bold text-[#c9d1d9] mb-6 flex items-center gap-2">
+            <BrainCircuit size={20} className="text-[#58a6ff]" />
+            Commit Parameters
+          </h2>
+          <form className="space-y-5" onSubmit={handlePredict}>
+            <div className="grid grid-cols-2 gap-5">
+              <Field label="Files Changed">
+                <input type="number" min="0" value={form.files_changed} onChange={set('files_changed')} className={FIELD_CLS} />
+              </Field>
+              <Field label="Lines Added">
+                <input type="number" min="0" value={form.lines_added} onChange={set('lines_added')} className={FIELD_CLS} />
+              </Field>
             </div>
+            <div className="grid grid-cols-2 gap-5">
+              <Field label="Lines Deleted">
+                <input type="number" min="0" value={form.lines_deleted} onChange={set('lines_deleted')} className={FIELD_CLS} />
+              </Field>
+              <Field label="Previous Failures">
+                <input type="number" min="0" value={form.previous_failures} onChange={set('previous_failures')} className={FIELD_CLS} />
+              </Field>
+            </div>
+            <div className="grid grid-cols-2 gap-5">
+              <Field label="Test Coverage (%)">
+                <input type="number" min="0" max="100" step="0.1" value={form.test_coverage} onChange={set('test_coverage')} className={FIELD_CLS} />
+              </Field>
+              <Field label="Is Merge Commit">
+                <select value={form.is_merge_commit} onChange={set('is_merge_commit')} className={FIELD_CLS}>
+                  <option value="0">No</option>
+                  <option value="1">Yes</option>
+                </select>
+              </Field>
+            </div>
+            <Field label="Commit Message (optional)">
+              <input type="text" value={form.commit_message} onChange={set('commit_message')} placeholder="e.g. fix: resolve auth bug" className={FIELD_CLS} />
+            </Field>
 
-            <Toggle label="Merge commit"      id="mc" value={form.is_merge_commit}     onChange={set('is_merge_commit')} />
-            <Toggle label="Recent failure"    id="rf" value={form.recent_failure_flag}  onChange={set('recent_failure_flag')} />
+            {error && (
+              <p className="text-sm text-[#f85149] bg-[#3d1a1a] border border-[#6e2020] rounded-lg px-4 py-3">{error}</p>
+            )}
 
-            <Field
-              label="Commit message"
-              id="msg"
-              type="text"
-              value={form.commit_message}
-              onChange={set('commit_message')}
-            />
-
-            {/* Advanced section */}
-            <button
-              type="button"
-              className="flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wider text-[var(--color-text-secondary)] transition-colors hover:text-[#58a6ff]"
-              onClick={() => setShowAdvanced((v) => !v)}
-            >
-              {showAdvanced ? <ChevronUp size={14} strokeWidth={2.5} /> : <ChevronDown size={14} strokeWidth={2.5} />}
-              Advanced options
+            <button disabled={loading} className="w-full mt-2 bg-[#2ea043] hover:bg-[#2c974b] disabled:opacity-60 text-white font-bold py-3 px-4 rounded-lg shadow-sm transition-colors flex justify-center items-center gap-2">
+              {loading ? (
+                <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+              ) : (
+                'Run Prediction'
+              )}
             </button>
+          </form>
+        </div>
 
-            {showAdvanced && (
-              <div className="space-y-4 pt-1">
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                  <Field label="Msg length"         id="ml"  value={form.commit_message_length}     onChange={set('commit_message_length')} />
-                  <Field label="Contributors (30d)"  id="nc"  value={form.num_contributors_last_30d} onChange={set('num_contributors_last_30d')} />
-                  <Field label="Days since failure"  id="dsf" value={form.days_since_last_failure}   onChange={set('days_since_last_failure')} />
+        {/* Right Side: Analysis */}
+        <div className="bg-[#161b22] border border-[#30363d] rounded-xl p-8 shadow-xl flex flex-col">
+          <h2 className="text-lg font-bold text-[#c9d1d9] mb-6">AI Analysis Result</h2>
+
+          {result ? (
+            <div className="flex-1 flex flex-col fade-in space-y-6">
+              {/* Decision badge */}
+              <div
+                className="flex items-center gap-3 px-5 py-4 rounded-xl border font-bold text-xl"
+                style={{ background: ds.bg, borderColor: ds.border, color: ds.color }}
+              >
+                <DecisionIcon size={24} />
+                {result.decision.replace('_', ' ')}
+              </div>
+
+              {/* Failure probability */}
+              <div>
+                <div className="flex justify-between text-sm font-medium mb-2">
+                  <span className="text-[#8b949e]">Failure Probability</span>
+                  <span className="text-[#c9d1d9] font-mono">{(result.failure_probability * 100).toFixed(1)}%</span>
                 </div>
-                <div>
-                  <label className="text-sm font-medium block mb-1.5 text-[var(--color-text-primary)]">
-                    Changed files <span className="text-xs font-normal text-[var(--color-text-secondary)]">(one per line)</span>
-                  </label>
-                  <textarea
-                    rows={4}
-                    value={form.changed_files}
-                    onChange={(e) => set('changed_files')(e.target.value)}
-                    className="w-full px-4 py-3 rounded-lg border text-sm font-mono outline-none resize-none bg-[#0d1117] text-[var(--color-text-primary)] border-[#30363d] focus:border-[#2ea043] focus:ring-1 focus:ring-[#2ea043] hover:border-[#8b949e]"
+                <div className="w-full bg-[#0d1117] h-2.5 rounded-full overflow-hidden border border-[#30363d]">
+                  <div
+                    className="h-full rounded-full transition-all duration-500"
+                    style={{ width: `${(result.failure_probability * 100).toFixed(1)}%`, background: ds.color }}
                   />
                 </div>
               </div>
-            )}
 
-            {error && (
-              <p className="text-sm rounded-md border px-4 py-3 bg-[#f8514926] text-[#f85149] border-[#f8514940]">
-                {error}
-              </p>
-            )}
-
-            <button
-              type="submit"
-              disabled={loading}
-              className="w-full flex items-center justify-center gap-2 py-3 rounded-lg font-semibold text-sm min-h-[48px] transition-all duration-200 bg-[#2ea043] text-white shadow-sm hover:bg-[#238636] disabled:opacity-50 active:scale-[0.98]"
-            >
-              <Zap size={16} strokeWidth={2} />
-              {loading ? 'Predicting...' : 'Run Prediction'}
-            </button>
-          </form>
-          </div>
-        </div>
-
-        {/* ── Result ── */}
-        <div className="panel flex flex-col">
-          <div className="panel-header">
-            <h2 className="section-title">Prediction Result</h2>
-          </div>
-          <div className="p-6 flex flex-col gap-6 flex-1">
-
-          {!result && !loading && (
-            <div className="flex-1 flex flex-col items-center justify-center text-center gap-4 py-16">
-              <Zap size={36} className="text-[#30363d]" />
-              <p className="text-sm font-medium text-[var(--color-text-secondary)]">Fill in the form and run a prediction</p>
-            </div>
-          )}
-
-          {loading && (
-            <div className="flex-1 flex flex-col items-center justify-center gap-3 py-16">
-              <div className="w-8 h-8 rounded-full border-2 border-t-transparent animate-spin border-[#58a6ff]" />
-              <p className="text-sm font-medium text-[var(--color-text-secondary)]">Analyzing commit...</p>
-            </div>
-          )}
-
-          {result && !loading && (
-            <div className="space-y-6">
-              {/* Decision badge */}
-              <div
-                className="flex items-center gap-4 rounded-xl border p-5 shadow-sm"
-                style={{ background: dm.bg, borderColor: dm.border }}
-              >
-                <dm.icon size={26} style={{ color: dm.color }} />
-                <div>
-                  <p className="text-xs font-semibold uppercase tracking-widest mb-0.5" style={{ color: dm.color }}>Decision</p>
-                  <p className="text-2xl font-bold tracking-tight" style={{ color: dm.color }}>{dm.label}</p>
+              {/* ML / LLM confidence */}
+              <div className="grid grid-cols-2 gap-4 text-sm">
+                <div className="bg-[#0d1117] rounded-lg border border-[#30363d] p-4">
+                  <p className="text-[#8b949e] text-xs uppercase tracking-wider mb-1">ML Confidence</p>
+                  <p className="text-[#c9d1d9] font-mono font-bold text-lg">{(result.ml_confidence * 100).toFixed(0)}%</p>
+                </div>
+                <div className="bg-[#0d1117] rounded-lg border border-[#30363d] p-4">
+                  <p className="text-[#8b949e] text-xs uppercase tracking-wider mb-1">LLM Risk</p>
+                  <p className="font-bold text-lg" style={{ color: result.llm_risk_level === 'HIGH' ? '#f85149' : result.llm_risk_level === 'LOW' ? '#3fb950' : '#e3b341' }}>
+                    {result.llm_risk_level}
+                  </p>
                 </div>
               </div>
 
-              <RiskBar probability={result.failure_probability} />
-
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                {[
-                  { label: 'ML Confidence',   value: `${(result.ml_confidence * 100).toFixed(1)}%` },
-                  { label: 'LLM Risk',         value: result.llm_risk_level },
-                  { label: 'LLM Confidence',  value: `${(result.llm_confidence * 100).toFixed(1)}%` },
-                ].map((m) => (
-                  <div
-                    key={m.label}
-                    className="rounded-lg p-4 border bg-[#0d1117] border-[#30363d]"
-                  >
-                    <p className="text-xs font-medium mb-1 text-[var(--color-text-secondary)]">{m.label}</p>
-                    <p className="font-semibold text-sm text-[var(--color-text-primary)]">{m.value}</p>
-                  </div>
-                ))}
-              </div>
-
-              {result.reasoning && (
-                <div className="rounded-lg p-5 border bg-[#0d1117] border-[#30363d]">
-                  <p className="text-xs font-semibold uppercase tracking-wider mb-2 text-[var(--color-text-secondary)]">Reasoning</p>
-                  <p className="text-sm leading-relaxed text-[var(--color-text-primary)]">{result.reasoning}</p>
-                </div>
-              )}
-
-              {result.affected_modules?.length > 0 && (
-                <div>
-                  <p className="text-xs font-semibold uppercase tracking-wider mb-2 text-[var(--color-text-secondary)]">Affected modules</p>
-                  <div className="flex flex-wrap gap-2">
+              {/* Reasoning */}
+              <div className="bg-[#0d1117] rounded-lg border border-[#30363d] p-5 flex-1">
+                <h4 className="text-[#c9d1d9] font-medium mb-2 text-sm uppercase tracking-wide">Reasoning</h4>
+                <p className="text-[#8b949e] text-sm leading-relaxed">{result.reasoning}</p>
+                {result.affected_modules?.length > 0 && (
+                  <div className="mt-3 flex flex-wrap gap-1.5">
                     {result.affected_modules.map((m) => (
-                      <span
-                        key={m}
-                        className="px-2.5 py-1 rounded-md text-xs font-mono font-medium border bg-[#1f2328] text-[#c9d1d9] border-[#30363d]"
-                      >
-                        {m}
-                      </span>
+                      <span key={m} className="px-2 py-0.5 text-xs rounded bg-[#21262d] text-[#8b949e] border border-[#30363d]">{m}</span>
                     ))}
                   </div>
-                </div>
-              )}
-
-              {result.partial_test_paths?.length > 0 && (
-                <div>
-                  <p className="text-xs font-semibold uppercase tracking-wider mb-2 text-[var(--color-text-secondary)]">Partial test paths</p>
-                  <div className="space-y-1.5">
-                    {result.partial_test_paths.map((p) => (
-                      <p key={p} className="text-xs font-mono px-3 py-1.5 rounded-md border bg-[#d2992226] text-[#d29922] border-[#d2992240]">
-                        {p}
-                      </p>
-                    ))}
-                  </div>
-                </div>
-              )}
+                )}
+              </div>
+            </div>
+          ) : (
+            <div className="flex-1 flex flex-col items-center justify-center text-[#8b949e] border-2 border-dashed border-[#30363d] rounded-xl bg-[#0d1117]/50 p-6 text-center">
+              <BrainCircuit size={48} className="text-[#30363d] mb-4" />
+              <p>Fill in the parameters and click <strong className="text-[#c9d1d9]">Run Prediction</strong> to get an AI evaluation.</p>
             </div>
           )}
-          </div>
         </div>
       </div>
     </div>

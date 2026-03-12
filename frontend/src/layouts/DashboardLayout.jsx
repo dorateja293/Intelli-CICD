@@ -1,39 +1,36 @@
-import { Navigate, Outlet } from 'react-router-dom'
-import { useAuth } from '../context/AuthContext'
-import { SidebarProvider } from '../context/SidebarContext'
+import { Outlet } from 'react-router-dom'
 import Sidebar from '../components/Sidebar'
 import TopBar from '../components/TopBar'
+import { SidebarProvider } from '../context/SidebarContext'
+import { useSidebar } from '../context/SidebarContext'
 
-export default function DashboardLayout() {
-  const { user, loading } = useAuth()
-
-  if (loading) {
-    return (
-      <div
-        className="flex h-screen w-full items-center justify-center bg-[var(--color-bg-primary)]"
-        role="status"
-        aria-label="Loading"
-      >
-        <div className="h-10 w-10 rounded-full border-2 border-t-transparent animate-spin border-[var(--color-accent)]" />
-      </div>
-    )
-  }
-  if (!user) return <Navigate to="/login" replace />
-
+function LayoutInner() {
+  const { open, setOpen } = useSidebar()
   return (
-    <SidebarProvider>
-      <div className="flex h-screen overflow-hidden bg-[var(--color-bg-primary)]">
-        <Sidebar />
-        <div className="flex flex-col flex-1 overflow-hidden min-w-0">
-          <TopBar />
-          <main className="flex-1 overflow-y-auto fade-in">
-            <div className="max-w-7xl mx-auto px-8 py-24">
-              <Outlet />
-            </div>
-          </main>
-        </div>
+    <div className="flex min-h-screen bg-[#0d1117] text-[#c9d1d9]">
+      {/* Mobile overlay */}
+      {open && (
+        <div
+          className="fixed inset-0 z-20 bg-black/60 lg:hidden"
+          onClick={() => setOpen(false)}
+          aria-hidden="true"
+        />
+      )}
+      <Sidebar />
+      <div className="flex flex-col flex-1 min-w-0">
+        <TopBar />
+        <main className="flex-1 overflow-y-auto p-5 sm:p-6 lg:p-8">
+          <Outlet />
+        </main>
       </div>
-    </SidebarProvider>
+    </div>
   )
 }
 
+export default function DashboardLayout() {
+  return (
+    <SidebarProvider>
+      <LayoutInner />
+    </SidebarProvider>
+  )
+}

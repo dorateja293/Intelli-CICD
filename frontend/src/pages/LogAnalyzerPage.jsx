@@ -1,240 +1,134 @@
 import { useState } from 'react'
-import { Search, AlertTriangle, CheckCircle, Info, AlertOctagon, Clipboard } from 'lucide-react'
+import { TerminalSquare, AlertTriangle, PlayCircle, BrainCircuit } from 'lucide-react'
 import { logService, getErrorMessage } from '../services/api'
 
-const SAMPLE_LOGS = {
-  dependency: `Running pip install -r requirements.txt
-Collecting requests>=2.28
-  Downloading requests-2.31.0-py3-none-any.whl
-ModuleNotFoundError: No module named 'httpx'
-ERROR: Could not find a version that satisfies the requirement httpx==0.28.1
-build: exited with code 1`,
-
-  test: `============================= test session starts ==============================
-collected 24 items
-FAILED tests/test_auth.py::test_login_invalid_password - AssertionError: 401 != 200
-FAILED tests/test_api.py::test_predict_endpoint - AssertionError: expected RUN_TESTS got SKIP_TESTS
-2 failed, 22 passed in 3.42s`,
-
-  timeout: `Running integration tests...
-jest FAIL src/__tests__/integration.test.js
-  ● Integration › API › should respond within 5000ms
-    Error: Timeout of 5000ms exceeded.
-    connect ETIMEDOUT 192.168.1.100:5432
-Test Suites: 1 failed, 3 passed, 4 total`,
-
-  infrastructure: `Starting services...
-docker: Error response from daemon: driver failed programming external connectivity
-Connection refused: ECONNREFUSED 127.0.0.1:5432
-FATAL: database "intellici" does not exist
-Error: Could not connect to PostgreSQL`,
-}
-
-const SEVERITY_META = {
-  critical: { color: '#f85149', bg: '#f8514926', border: '#f8514940', icon: AlertOctagon,  label: 'Critical' },
-  high:     { color: '#d29922', bg: '#d2992226', border: '#d2992240', icon: AlertTriangle, label: 'High' },
-  medium:   { color: '#58a6ff', bg: '#58a6ff26', border: '#58a6ff40', icon: Info,          label: 'Medium' },
-  low:      { color: '#3fb950', bg: '#2ea04326', border: '#3fb95040', icon: CheckCircle,   label: 'Low' },
-}
-
 export default function LogAnalyzerPage() {
-  const [logText, setLogText] = useState('')
-  const [result, setResult] = useState(null)
   const [loading, setLoading] = useState(false)
-  const [error, setError] = useState('')
-  const [copied, setCopied] = useState(false)
+  const [result, setResult] = useState(null)
+  const [error, setError] = useState(null)
+  const [logs, setLogs] = useState('')
 
   const handleAnalyze = async () => {
-    if (!logText.trim()) return
-    setError('')
+    if (!logs.trim()) return
+    setError(null)
     setLoading(true)
-    setResult(null)
     try {
-      const { data } = await logService.analyzeLogs(logText)
+      const { data } = await logService.analyzeLogs(logs)
       setResult(data)
     } catch (err) {
-      setError(getErrorMessage(err, 'Analysis failed. Is the backend running?'))
+      setError(getErrorMessage(err, 'Analysis failed. Ensure the backend is running.'))
     } finally {
       setLoading(false)
     }
   }
 
-  const loadSample = (key) => {
-    setLogText(SAMPLE_LOGS[key])
-    setResult(null)
-    setError('')
-  }
-
-  const copyFix = () => {
-    if (!result) return
-    navigator.clipboard.writeText(result.suggested_fix)
-    setCopied(true)
-    setTimeout(() => setCopied(false), 2000)
-  }
-
-  const sm = result ? (SEVERITY_META[result.severity] ?? SEVERITY_META.medium) : null
-
   return (
-    <div className="max-w-[1100px] mx-auto space-y-8 fade-in">
-      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-6">
-        <div>
-          <h1 className="page-title">CI Log Analyzer</h1>
-          <p className="page-sub">Paste CI log output to classify the error and get actionable fix suggestions</p>
-        </div>
-        <div className="flex items-center gap-2 flex-wrap justify-end">
-          <span className="text-xs font-medium text-[var(--color-text-secondary)]">Try sample:</span>
-          {Object.keys(SAMPLE_LOGS).map((k) => (
-            <button
-              key={k}
-              onClick={() => loadSample(k)}
-              className="text-sm px-3 py-1.5 rounded-md border font-medium bg-[#21262d] border-[#30363d] text-[var(--color-text-secondary)] transition-colors hover:border-[#8b949e] hover:text-[var(--color-text-primary)] shadow-sm"
-            >
-              {k}
-            </button>
-          ))}
-        </div>
+    <div className="w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-8 fade-in">
+      <div className="mb-8">
+        <h1 className="text-2xl font-bold text-[#c9d1d9] tracking-tight">AI Log Analyzer</h1>
+        <p className="text-[#8b949e] text-sm mt-1">Paste your CI/CD logs to identify root causes and get suggested fixes</p>
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-
-        {/* ── Input ── */}
-        <div className="panel">
-          <div className="panel-header">
-            <h2 className="section-title">CI Log Input</h2>
-            <span className="text-xs font-medium text-[var(--color-text-secondary)]">{logText.split('\n').filter(Boolean).length} lines</span>
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 h-[700px]">
+        {/* Left Side: Input */}
+        <div className="bg-[#161b22] border border-[#30363d] rounded-xl flex flex-col overflow-hidden shadow-xl">
+          <div className="p-4 border-b border-[#30363d] bg-[#0d1117]/50 flex items-center gap-2">
+            <TerminalSquare size={18} className="text-[#8b949e]" />
+            <span className="text-sm font-medium text-[#c9d1d9]">Raw Build Output</span>
           </div>
-          <div className="p-5 flex flex-col gap-4">
-            <textarea
-              rows={20}
-              value={logText}
-              onChange={(e) => { setLogText(e.target.value); setResult(null) }}
-              placeholder="Paste your CI log output here..."
-              className="w-full font-mono text-xs rounded-lg border px-4 py-3 outline-none resize-none bg-[#0d1117] border-[#30363d] text-[var(--color-text-primary)] focus:border-[#58a6ff] focus:ring-1 focus:ring-[#58a6ff] transition-all duration-200 hover:border-[#8b949e]"
-              style={{ lineHeight: 1.65 }}
+          <div className="flex-1 p-6 flex flex-col">
+            <textarea 
+              value={logs}
+              onChange={(e) => setLogs(e.target.value)}
+              className="flex-1 w-full bg-[#0d1117] border border-[#30363d] text-[#c9d1d9] font-mono text-sm rounded-lg p-4 outline-none focus:border-[#58a6ff] focus:ring-1 focus:ring-[#58a6ff] transition-all resize-none shadow-inner"
+              placeholder="Paste terminal error trace here..."
             />
-
-            {error && (
-              <p className="text-sm rounded-md border px-4 py-3 bg-[#f8514926] text-[#f85149] border-[#f8514940]">
-                {error}
-              </p>
-            )}
-
-            <button
+            <button 
               onClick={handleAnalyze}
-              disabled={loading || !logText.trim()}
-              className="flex items-center justify-center gap-2 py-3 rounded-lg font-semibold text-sm transition-all duration-200 bg-[#2ea043] text-white hover:bg-[#238636] disabled:opacity-50"
-              style={{ minHeight: '48px' }}
+              disabled={loading || !logs}
+              className="w-full mt-6 bg-[#2ea043] hover:bg-[#2c974b] disabled:bg-[#2ea043]/50 disabled:cursor-not-allowed text-white font-bold py-3.5 px-4 rounded-lg shadow-sm transition-colors flex justify-center items-center gap-2"
             >
-              <Search size={16} strokeWidth={2} />
-              {loading ? 'Analyzing...' : 'Analyze Log'}
+              {loading ? (
+                <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin"></div>
+              ) : (
+                <>
+                  <PlayCircle size={18} />
+                  Analyze Logs
+                </>
+              )}
             </button>
           </div>
         </div>
 
-        {/* ── Result ── */}
-        <div className="panel">
-          <div className="panel-header">
-            <h2 className="section-title">Analysis Result</h2>
+        {/* Right Side: Output */}
+        <div className="bg-[#161b22] border border-[#30363d] rounded-xl flex flex-col overflow-hidden shadow-xl">
+          <div className="p-4 border-b border-[#30363d] bg-[#0d1117]/50 flex items-center gap-2">
+            <BrainCircuit size={18} className="text-[#58a6ff]" />
+            <span className="text-sm font-medium text-[#c9d1d9]">AI Diagnosis</span>
           </div>
-          <div className="p-5">
-
-            {!result && !loading && (
-              <div className="flex flex-col items-center justify-center text-center gap-4 py-20">
-                <Search size={36} className="text-[#30363d]" />
-                <p className="text-sm font-medium text-[var(--color-text-secondary)]">Analyze a log to see results</p>
-              </div>
+          
+          <div className="flex-1 p-8 overflow-y-auto">
+            {error && (
+              <div className="mb-4 text-sm text-[#f85149] bg-[#3d1a1a] border border-[#6e2020] rounded-lg px-4 py-3">{error}</div>
             )}
-
-            {loading && (
-              <div className="flex flex-col items-center justify-center gap-4 py-20">
-                <div className="w-8 h-8 rounded-full border-2 border-t-transparent animate-spin border-[#58a6ff]" />
-                <p className="text-sm font-medium text-[var(--color-text-secondary)]">Scanning log patterns...</p>
-              </div>
-            )}
-
-            {result && !loading && (
-              <div className="space-y-6">
-
-                {/* Error type + severity */}
-                <div
-                  className="flex items-center gap-4 rounded-xl border p-5 shadow-sm"
-                  style={{ background: sm.bg, borderColor: sm.border }}
-                >
-                  <sm.icon size={26} style={{ color: sm.color }} />
-                  <div className="flex-1 min-w-0">
-                    <div className="flex items-center gap-2 flex-wrap mb-1.5">
-                      <span
-                        className="text-[11px] font-bold uppercase tracking-wider px-2.5 py-0.5 rounded-md border"
-                        style={{ color: sm.color, borderColor: sm.border, background: sm.bg }}
-                      >
-                        {sm.label}
-                      </span>
-                      <span className="text-xs font-mono font-medium px-2 py-0.5 rounded-md bg-[#21262d] text-[var(--color-text-secondary)] border border-[#30363d]">
-                        {result.error_type.replace(/_/g, ' ')}
-                      </span>
-                    </div>
-                    <p className="text-sm font-semibold leading-snug text-[var(--color-text-primary)]">
-                      {result.root_cause}
-                    </p>
-                  </div>
-                </div>
-
-                {/* Confidence */}
+            {result ? (
+              <div className="space-y-8 fade-in">
+                {/* Error Type */}
                 <div>
-                  <div className="flex justify-between text-xs mb-1.5 font-medium">
-                    <span className="text-[var(--color-text-secondary)]">Classification confidence</span>
-                    <span className="font-mono font-bold text-[var(--color-text-primary)]">
-                      {(result.confidence * 100).toFixed(0)}%
-                    </span>
-                  </div>
-                  <div className="h-2 rounded-full bg-[#21262d]">
-                    <div
-                      className="h-full rounded-full transition-all duration-500 shadow-[0_0_8px_currentColor] opacity-90"
-                      style={{ width: `${result.confidence * 100}%`, background: sm.color }}
-                    />
+                  <h4 className="text-[#8b949e] text-xs font-semibold uppercase tracking-widest mb-3">Error Classification</h4>
+                  <div className="inline-flex items-center gap-2 px-4 py-2 bg-[#f85149]/10 border border-[#f85149]/20 text-[#f85149] rounded-lg">
+                    <AlertTriangle size={18} />
+                    <span className="font-bold">{result.error_type}</span>
                   </div>
                 </div>
 
-                {/* Suggested fix */}
-                <div className="rounded-xl border bg-[#0d1117] border-[#30363d]">
-                  <div className="flex items-center justify-between px-4 py-3 border-b border-[#30363d]">
-                    <span className="text-xs font-semibold uppercase tracking-wider text-[var(--color-text-secondary)]">Suggested Fix</span>
-                    <button
-                      onClick={copyFix}
-                      className="flex items-center gap-1.5 text-xs font-medium text-[#2f81f7] hover:text-[#58a6ff] transition-colors"
-                    >
-                      <Clipboard size={14} />
-                      {copied ? 'Copied!' : 'Copy'}
-                    </button>
-                  </div>
-                  <div className="px-5 py-4">
-                    {result.suggested_fix.split('\n').map((line, i) => (
-                      <p key={i} className={`text-sm leading-relaxed mb-1 last:mb-0 ${line.match(/^\d\./) ? 'text-[var(--color-text-primary)] font-medium' : 'text-[var(--color-text-secondary)]'}`}>
-                        {line}
-                      </p>
-                    ))}
+                {/* Root Cause */}
+                <div>
+                  <h4 className="text-[#8b949e] text-xs font-semibold uppercase tracking-widest mb-3">Root Cause Analysis</h4>
+                  <p className="text-[#c9d1d9] text-sm leading-relaxed bg-[#0d1117] p-5 rounded-lg border border-[#30363d] shadow-inner">
+                    {result.root_cause}
+                  </p>
+                </div>
+
+                {/* Confidence + Severity */}
+                <div className="flex items-center justify-between border-y border-[#30363d] py-4">
+                  <span className="text-[#c9d1d9] font-medium text-sm">Confidence</span>
+                  <div className="flex items-center gap-3">
+                    <span className="text-xs px-2 py-0.5 rounded border font-semibold"
+                      style={{
+                        color: result.severity === 'HIGH' ? '#f85149' : result.severity === 'LOW' ? '#3fb950' : '#e3b341',
+                        borderColor: result.severity === 'HIGH' ? '#6e2020' : result.severity === 'LOW' ? '#255130' : '#5c4a00',
+                        background: result.severity === 'HIGH' ? '#3d1a1a' : result.severity === 'LOW' ? '#1a3a1e' : '#2a2a0a',
+                      }}
+                    >{result.severity}</span>
+                    <div className="w-2 h-2 rounded-full bg-[#2ea043] animate-pulse"></div>
+                    <span className="text-[#2ea043] font-mono font-bold">{(result.confidence * 100).toFixed(0)}%</span>
                   </div>
                 </div>
 
-                {/* Matched lines */}
+                {/* Matched Lines */}
                 {result.matched_lines?.length > 0 && (
                   <div>
-                    <p className="text-xs font-semibold uppercase tracking-wider mb-2 text-[var(--color-text-secondary)]">
-                      Matched log lines ({result.matched_lines.length})
-                    </p>
-                    <div className="rounded-xl border overflow-hidden border-[#30363d]">
-                      {result.matched_lines.map((line, i) => (
-                        <p
-                          key={i}
-                          className="px-4 py-2.5 text-xs font-mono border-b border-[#30363d] last:border-0 truncate font-medium bg-[#161b22]"
-                          style={{ color: sm.color }}
-                        >
-                          {line}
-                        </p>
-                      ))}
+                    <h4 className="text-[#8b949e] text-xs font-semibold uppercase tracking-widest mb-3">Matched Log Lines</h4>
+                    <div className="bg-[#0d1117] border border-[#30363d] rounded-lg p-4 font-mono text-xs text-[#f85149] space-y-1 max-h-40 overflow-y-auto">
+                      {result.matched_lines.map((line, i) => <div key={i}>{line}</div>)}
                     </div>
                   </div>
                 )}
+
+                {/* Fix */}
+                <div>
+                  <h4 className="text-[#8b949e] text-xs font-semibold uppercase tracking-widest mb-3">Suggested Remediation</h4>
+                  <div className="bg-[#0d1117] rounded-lg border border-[#30363d] overflow-hidden shadow-inner">
+                    <div className="px-4 py-2 border-b border-[#30363d] bg-[#161b22] text-[#8b949e] text-xs font-mono">Suggested Fix</div>
+                    <div className="p-5 text-sm text-[#c9d1d9] whitespace-pre-wrap">{result.suggested_fix}</div>
+                  </div>
+                </div>
+              </div>
+            ) : (
+              <div className="h-full flex flex-col items-center justify-center text-[#8b949e] border-2 border-dashed border-[#30363d] rounded-xl bg-[#0d1117]/50 p-6 text-center">
+                <TerminalSquare size={48} className="text-[#30363d] mb-4" />
+                <p>Paste logs on the left and trigger analysis to diagnose the failure.</p>
               </div>
             )}
           </div>

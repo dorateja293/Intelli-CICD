@@ -26,13 +26,13 @@ def verify_password(plain: str, hashed: str) -> bool:
 
 async def hash_password_async(plain: str) -> str:
     """Off-load bcrypt (CPU-blocking) to a thread pool to avoid blocking the event loop."""
-    loop = asyncio.get_event_loop()
+    loop = asyncio.get_running_loop()
     return await loop.run_in_executor(None, hash_password, plain)
 
 
 async def verify_password_async(plain: str, hashed: str) -> bool:
     """Off-load bcrypt verify (CPU-blocking) to a thread pool."""
-    loop = asyncio.get_event_loop()
+    loop = asyncio.get_running_loop()
     return await loop.run_in_executor(None, verify_password, plain, hashed)
 
 
