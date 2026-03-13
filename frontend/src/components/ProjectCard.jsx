@@ -1,41 +1,40 @@
-import Button from './Button'
-
-export default function ProjectCard({
-  project,
-  onViewCommits,
-  onViewAnalytics,
-  onDelete,
-}) {
+import { Github, Play, SkipForward, AlertCircle } from 'lucide-react'
+export default function ProjectCard({ name, repo, commits, skipRate, status }) {
   return (
-    <div className="bg-white border border-slate-200 rounded-2xl p-6 transition-all duration-300 hover:shadow-lg hover:-translate-y-1 group">
-      <div className="flex items-start justify-between gap-3">
-        <div className="min-w-0">
-          <h3 className="font-bold text-lg text-slate-900 truncate group-hover:text-indigo-600 transition-colors">{project.name}</h3>
-          <p className="text-sm text-slate-500 mt-1 truncate">{project.repo}</p>
+    <div className="glass-panel flex flex-col h-full group">
+      <div className="p-6 border-b border-white/5">
+        <div className="flex justify-between items-start mb-4">
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 rounded-xl bg-white/5 flex items-center justify-center border border-white/10 group-hover:border-indigo-500/30 transition-colors">
+              <Github size={20} className="text-[#ededed]" />
+            </div>
+            <div>
+              <h3 className="text-white font-bold text-base tracking-tight">{name}</h3>
+              <p className="text-[#a1a1aa] text-xs font-medium font-mono mt-0.5">{repo}</p>
+            </div>
+          </div>
+          <div className={`px-2.5 py-1 rounded-full border text-[10px] font-bold uppercase tracking-wider flex items-center gap-1.5
+            ${status === 'healthy' ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20' : 'bg-rose-500/10 text-rose-400 border-rose-500/20'}`}>
+            <span className={`w-1.5 h-1.5 rounded-full ${status === 'healthy' ? 'bg-emerald-400' : 'bg-rose-400'}`}></span>
+            {status}
+          </div>
         </div>
-        <div className="text-right">
-          <p className="text-xs font-semibold uppercase tracking-wider text-slate-400">Skip rate</p>
-          <p className="font-mono text-base font-bold text-emerald-600 mt-1">{project.skipRate ?? '—'}</p>
+        
+        <div className="grid grid-cols-2 gap-4 mt-6">
+          <div className="bg-black/20 rounded-xl p-3 border border-white/5">
+            <p className="text-[#71717a] text-[10px] font-bold uppercase tracking-wider mb-1">Compute Saved</p>
+            <p className="text-indigo-400 font-bold text-lg">{skipRate}</p>
+          </div>
+          <div className="bg-black/20 rounded-xl p-3 border border-white/5">
+            <p className="text-[#71717a] text-[10px] font-bold uppercase tracking-wider mb-1">Total Runs</p>
+            <p className="text-white font-bold text-lg">{commits}</p>
+          </div>
         </div>
       </div>
-
-      <div className="mt-6 pt-5 border-t border-slate-100 grid grid-cols-2 gap-4 text-xs">
-        <div>
-          <p className="font-semibold uppercase tracking-wider text-slate-400">Total commits</p>
-          <p className="font-mono text-sm font-semibold text-slate-700 mt-1.5">{project.totalCommits ?? '—'}</p>
-        </div>
-        <div>
-          <p className="font-semibold uppercase tracking-wider text-slate-400">Updated</p>
-          <p className="font-mono text-sm font-semibold text-slate-700 mt-1.5">{project.updatedAt ?? '—'}</p>
-        </div>
-      </div>
-
-      <div className="mt-5 flex flex-wrap gap-2">
-        <Button variant="secondary" onClick={onViewCommits}>View Commits</Button>
-        <Button variant="secondary" onClick={onViewAnalytics}>View Analytics</Button>
-        <Button variant="danger" onClick={onDelete}>Delete Project</Button>
+      <div className="p-4 mt-auto flex gap-3">
+        <button className="flex-1 bg-white/5 hover:bg-white/10 border border-white/10 text-white py-2 rounded-xl text-xs font-semibold transition-all">View Analytics</button>
+        <button className="flex-1 bg-indigo-500 hover:bg-indigo-600 text-white py-2 rounded-xl text-xs font-semibold shadow-[0_0_15px_rgba(99,102,241,0.3)] transition-all">Configure</button>
       </div>
     </div>
   )
 }
-
