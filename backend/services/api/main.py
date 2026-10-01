@@ -2197,10 +2197,12 @@ async def predict_pipeline(request: PredictRequest):
         "recent_failure_flag": recent_flag,
     }
 
+    repo_root = Path(__file__).resolve().parents[3]
     model_paths = [
-        Path("D:/intelli-ci/ml-engine/models/model.pkl"),
-        Path(__file__).resolve().parents[3] / "ml-engine" / "models" / "model.pkl",
+        repo_root / "ml-engine" / "models" / "model.pkl",
         Path("ml-engine/models/model.pkl"),
+        Path("/app/ml-engine/models/model.pkl"),
+        Path("D:/intelli-ci/ml-engine/models/model.pkl"),
     ]
     
     loaded_model = None
@@ -2285,11 +2287,22 @@ async def predict_pipeline(request: PredictRequest):
 async def get_ml_status():
     """Get status, metadata, and evaluation metrics of the trained ML model."""
     from pathlib import Path
-    model_path = Path("D:/intelli-ci/ml-engine/models/model.pkl")
-    dataset_path = Path("D:/intelli-ci/ml-engine/dataset/commits_train.csv")
+    repo_root = Path(__file__).resolve().parents[3]
+    candidate_models = [
+        repo_root / "ml-engine" / "models" / "model.pkl",
+        Path("ml-engine/models/model.pkl"),
+        Path("/app/ml-engine/models/model.pkl"),
+        Path("D:/intelli-ci/ml-engine/models/model.pkl"),
+    ]
+    candidate_datasets = [
+        repo_root / "ml-engine" / "dataset" / "commits_train.csv",
+        Path("ml-engine/dataset/commits_train.csv"),
+        Path("/app/ml-engine/dataset/commits_train.csv"),
+        Path("D:/intelli-ci/ml-engine/dataset/commits_train.csv"),
+    ]
 
-    exists = model_path.exists()
-    dataset_exists = dataset_path.exists()
+    exists = any(p.exists() for p in candidate_models)
+    dataset_exists = any(p.exists() for p in candidate_datasets)
 
     return APIResponse(data={
         "status": "ready" if exists else "needs_training",
@@ -2776,10 +2789,14 @@ async def health(db: AsyncSession = Depends(get_db)):
     except Exception:
         redis_status = "offline (graceful fallback)"
 
-    ml_model_status = "ready"
-    model_file = Path("D:/intelli-ci/ml-engine/models/model.pkl")
-    if not model_file.exists():
-        ml_model_status = "needs_training"
+    repo_root = Path(__file__).resolve().parents[3]
+    candidate_models = [
+        repo_root / "ml-engine" / "models" / "model.pkl",
+        Path("ml-engine/models/model.pkl"),
+        Path("/app/ml-engine/models/model.pkl"),
+        Path("D:/intelli-ci/ml-engine/models/model.pkl"),
+    ]
+    ml_model_status = "ready" if any(p.exists() for p in candidate_models) else "needs_training"
 
     overall_status = "healthy" if db_status == "connected" else "degraded"
 
