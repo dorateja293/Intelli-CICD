@@ -2301,7 +2301,8 @@ async def get_ml_status():
         Path("D:/intelli-ci/ml-engine/dataset/commits_train.csv"),
     ]
 
-    exists = any(p.exists() for p in candidate_models)
+    model_path = next((p for p in candidate_models if p.exists()), None)
+    exists = model_path is not None
     dataset_exists = any(p.exists() for p in candidate_datasets)
 
     return APIResponse(data={
