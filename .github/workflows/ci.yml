@@ -39,14 +39,30 @@ jobs:
           cache-dependency-path: backend/requirements.txt
 
       - name: Install backend dependencies
-        run: pip install -r backend/requirements.txt pytest pytest-asyncio httpx
+        run: pip install -r backend/requirements.txt
 
       - name: Run backend tests
         env:
+          # Database — use PostgreSQL service container
           DATABASE_URL: postgresql+asyncpg://postgres:postgres@localhost:5432/intellici_test
-          SECRET_KEY: test-secret-key
-          LLM_PROVIDER: none
-        run: pytest backend/tests/ -v --tb=short
+          # JWT
+          JWT_SECRET_KEY: ci-test-secret-key-not-real
+          JWT_ALGORITHM: HS256
+          ACCESS_TOKEN_EXPIRE_MINUTES: "15"
+          REFRESH_TOKEN_EXPIRE_DAYS: "7"
+          # GitHub OAuth — placeholder values so is_oauth_configured() returns True for tests
+          GITHUB_CLIENT_ID: gh_ci_test_client_id
+          GITHUB_CLIENT_SECRET: gh_ci_test_client_secret
+          GITHUB_REDIRECT_URI: http://localhost:3000/auth/github/callback
+          GITHUB_WEBHOOK_SECRET: ci-test-webhook-secret
+          # App
+          APP_ENV: test
+          DEBUG: "true"
+          CORS_ORIGINS: http://localhost:3000
+          # Python path — needed so `from services.api.main import app` resolves
+        working-directory: backend
+        run: |
+          python -m pytest tests/ -v --tb=short
 
   # ── ML engine ───────────────────────────────────────────────────────────────
   ml-engine:
