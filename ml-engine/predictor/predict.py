@@ -31,11 +31,12 @@ def load_model(path: str = DEFAULT_MODEL):
 
 
 def predict(features: dict, model_path: str = DEFAULT_MODEL) -> dict:
+    import pandas as pd
     model = load_model(model_path)
     row = [features.get(c, 0) for c in FEATURE_COLUMNS]
-    X = np.array(row, dtype=float).reshape(1, -1)
+    df_row = pd.DataFrame([row], columns=FEATURE_COLUMNS)
 
-    proba = model.predict_proba(X)[0]
+    proba = model.predict_proba(df_row)[0]
     classes = list(model.classes_)
     failure_prob = float(proba[classes.index(1)]) if 1 in classes else float(proba[-1])
     confidence = float(np.max(proba))

@@ -1,5 +1,5 @@
 {
-  "name": "intelli-ci-frontend",
+  "name": "frontend",
   "private": true,
   "version": "0.0.0",
   "type": "module",
@@ -10,23 +10,24 @@
     "preview": "vite preview"
   },
   "dependencies": {
-    "axios": "^1.6.0",
-    "lucide-react": "^0.300.0",
-    "react": "^18.2.0",
-    "react-dom": "^18.2.0",
-    "react-router-dom": "^6.20.0",
-    "recharts": "^2.10.0"
+    "axios": "^1.14.0",
+    "lucide-react": "^1.7.0",
+    "react": "^19.2.4",
+    "react-dom": "^19.2.4",
+    "react-router-dom": "^7.14.0",
+    "recharts": "^3.8.1"
   },
   "devDependencies": {
-    "@tailwindcss/vite": "^4.0.0",
-    "@types/react": "^18.2.66",
-    "@types/react-dom": "^18.2.22",
-    "@vitejs/plugin-react": "^4.2.1",
-    "eslint": "^8.57.0",
-    "eslint-plugin-react": "^7.34.1",
-    "eslint-plugin-react-hooks": "^4.6.0",
-    "eslint-plugin-react-refresh": "^0.4.6",
-    "tailwindcss": "^4.0.0",
-    "vite": "^5.2.0"
+    "@eslint/js": "^9.39.4",
+    "@tailwindcss/vite": "^4.3.3",
+    "@types/react": "^19.2.14",
+    "@types/react-dom": "^19.2.3",
+    "@vitejs/plugin-react": "^6.0.1",
+    "eslint": "^9.39.4",
+    "eslint-plugin-react-hooks": "^7.0.1",
+    "eslint-plugin-react-refresh": "^0.5.2",
+    "globals": "^17.4.0",
+    "tailwindcss": "^4.3.3",
+    "vite": "^8.0.1"
   }
 }

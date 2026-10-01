@@ -1,0 +1,41 @@
+"""Security module."""
+
+from shared.security.auth import (
+    RequirePermission,
+    RequireRole,
+    TokenClaims,
+    authorize_resource,
+    create_access_token,
+    create_refresh_token,
+    decode_token,
+    get_current_user,
+    get_optional_user,
+    has_permission,
+    hash_password,
+    require_permission,
+    require_role,
+    revoke_refresh_token,
+    store_refresh_token,
+    validate_refresh_token,
+    verify_password,
+)
+
+__all__ = [
+    "hash_password",
+    "verify_password",
+    "create_access_token",
+    "create_refresh_token",
+    "decode_token",
+    "TokenClaims",
+    "get_current_user",
+    "get_optional_user",
+    "has_permission",
+    "require_permission",
+    "require_role",
+    "RequirePermission",
+    "RequireRole",
+    "authorize_resource",
+    "store_refresh_token",
+    "validate_refresh_token",
+    "revoke_refresh_token",
+]

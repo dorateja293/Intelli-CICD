@@ -1,94 +1,81 @@
-import axios from 'axios'
-
-// FastAPI backend — override with VITE_API_URL in .env.local for production
-const BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:8000'
+import axios from 'axios';
 
 const api = axios.create({
-  baseURL: BASE_URL,
-  headers: { 'Content-Type': 'application/json' },
+  baseURL: import.meta.env.VITE_API_URL || '/api/v1',
   timeout: 15000,
-})
+});
 
-// Attach JWT to every request
 api.interceptors.request.use((config) => {
-  const token = localStorage.getItem('ici_token')
-  if (token) config.headers.Authorization = `Bearer ${token}`
-  return config
-})
-
-// Redirect to /login on 401
-api.interceptors.response.use(
-  (res) => res,
-  (err) => {
-    if (err.response?.status === 401) {
-      localStorage.removeItem('ici_token')
-      localStorage.removeItem('ici_user')
-      window.location.href = '/login'
-    }
-    return Promise.reject(err)
+  const token = localStorage.getItem('intelli_ci_token');
+  if (token) {
+    config.headers.Authorization = `Bearer ${token}`;
   }
-)
+  return config;
+});
 
-/** Extract user-friendly error message from API error response */
-export function getErrorMessage(err, fallback = 'An error occurred. Please try again.') {
-  const detail = err.response?.data?.detail
-  if (!detail) return fallback
-  if (typeof detail === 'string') return detail
-  if (Array.isArray(detail) && detail.length > 0) {
-    const first = detail[0]
-    const msg = first?.msg || first?.message
-    const loc = first?.loc?.filter(Boolean)?.join('.')
-    return loc ? `${loc}: ${msg}` : msg || fallback
-  }
-  return fallback
-}
-
-// ── Auth ── POST /login  POST /signup ─────────────────────────────────────────
 export const authService = {
-  login:  (email, password)        => api.post('/login',  { email, password }),
-  signup: (name, email, password)  => api.post('/signup', { name, email, password }),
-}
+  login: (data) => api.post('/auth/login', data),
+  signup: (data) => api.post('/auth/register', data),
+  getMe: () => api.get('/auth/me'),
+};
 
-// ── Predictions ── POST /predict ──────────────────────────────────────────────
-export const predictService = {
-  predict: (payload) => api.post('/predict', payload),
-}
-
-// ── Commit history ── GET /commits ────────────────────────────────────────────
-export const commitService = {
-  getCommits: (params) => api.get('/commits', { params }),
-}
-
-// ── Analytics ── GET /analytics/summary  GET /analytics/timeline ────────────
-export const analyticsService = {
-  getSummary: ()           => api.get('/analytics/summary'),
-  getTimeline: (days = 30) => api.get('/analytics/timeline', { params: { days } }),
-}
-
-// ── Repositories ── GET /repositories  POST /connect-repository  DELETE /repositories/:id ──
-export const repositoryService = {
-  list:    ()        => api.get('/repositories'),
-  connect: (payload) => api.post('/connect-repository', payload),
-  delete:  (id)      => api.delete(`/repositories/${id}`),
-}
-
-// ── Profile ── GET /profile  PUT /profile  PUT /profile/password ──────────────
 export const profileService = {
-  get:            ()                               => api.get('/profile'),
-  update:         (name)                           => api.put('/profile', { name }),
-  changePassword: (current_password, new_password) =>
-    api.put('/profile/password', { current_password, new_password }),
-}
+  getProfile: () => authService.getMe(),
+};
 
-// ── Log analyzer ── POST /analyze-logs  POST /fix-error ───────────────────────
-export const logService = {
-  analyzeLogs: (log_text) => api.post('/analyze-logs', { log_text }),
-  fixError:    (log_text) => api.post('/fix-error',    { log_text }),
-}
+export const githubService = {
+  getOAuthUrl: (redirectUri) => api.get('/github/oauth/login', { params: { redirect_uri: redirectUri } }),
+  handleCallback: (code, state, redirectUri) => api.get('/github/oauth/callback', { params: { code, state, redirect_uri: redirectUri } }),
+  getStatus: () => api.get('/github/status'),
+  disconnect: () => api.post('/github/disconnect'),
+  getRepositories: (params) => api.get('/github/repositories', { params }),
+  selectRepository: (data) => api.post('/github/repositories/select', data),
+  syncRepository: (repoId) => api.post(`/github/repositories/${repoId}/sync`),
+  getSyncStatus: (repoId) => api.get(`/github/repositories/${repoId}/sync-status`),
+  simulateWebhook: (data) => api.post('/github/simulate-webhook', data),
+};
 
-// ── System health ── GET /system-health ───────────────────────────────────────
-export const systemService = {
-  health: () => api.get('/system-health'),
-}
+export const projectService = {
+  getProjects: (params) => api.get('/repositories', { params }),
+  createProject: (data) => api.post('/repositories', data),
+  syncGitHubCommits: (data) => api.post('/github/sync-public', data),
+  syncRegisteredGitHubRepo: (repoId) => api.post(`/repositories/${repoId}/sync`),
+};
 
-export default api
+export const pipelineService = {
+  getPipelines: (params) => api.get('/pipelines', { params }),
+  getPipeline: (id) => api.get(`/pipelines/${id}`),
+  getJobLogs: (jobId) => api.get(`/jobs/${jobId}/logs`),
+  ingestPipeline: (data) => api.post('/pipelines/ingest', data),
+};
+
+export const commitService = pipelineService;
+
+export const analyticsService = {
+  getAnalytics: (days = 30, repositoryId = null) => api.get('/analytics/overview', { params: { days, repository_id: repositoryId } }),
+  getDurations: (repositoryId = null) => api.get('/analytics/durations', { params: { repository_id: repositoryId } }),
+  getStages: (repositoryId = null) => api.get('/analytics/stages', { params: { repository_id: repositoryId } }),
+  getFailures: (repositoryId = null) => api.get('/analytics/failures', { params: { repository_id: repositoryId } }),
+  getTrends: (days = 14, repositoryId = null) => api.get('/analytics/trends', { params: { days, repository_id: repositoryId } }),
+};
+
+export const predictorService = {
+  predict: (data) => api.post('/predict', data),
+  getStatus: () => api.get('/ml/status'),
+  getInsights: () => api.get('/ml/insights'),
+};
+
+export const logsService = {
+  analyze: (data) => api.post('/analyze-logs', data),
+  process: (data) => api.post('/logs/process', data),
+};
+
+export const recommendationService = {
+  getRecommendations: (repositoryId = null) => api.get('/recommendations', { params: { repository_id: repositoryId } }),
+};
+
+export const healthService = {
+  getHealth: () => api.get('/health'),
+};
+
+export default api;

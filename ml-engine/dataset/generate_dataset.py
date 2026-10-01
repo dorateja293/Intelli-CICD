@@ -31,17 +31,19 @@ def generate(n_samples: int = 5000) -> pd.DataFrame:
     days_since_failure = rng.integers(0, 90, n_samples)
     recent_failure_flag = (days_since_failure < 7).astype(int)
 
-    # Probabilistic label — realistic signal
-    failure_score = (
-        0.04 * files_changed
-        + 0.002 * code_churn
-        + 0.08 * previous_failures
-        - 0.005 * test_coverage
-        + 0.10 * recent_failure_flag
-        - 0.003 * days_since_failure
+    # Probabilistic label using logistic regression signal — realistic ~35-45% baseline failure rate
+    logits = (
+        -1.4
+        + 0.04 * (files_changed - 10)
+        + 0.002 * (code_churn - 300)
+        + 0.20 * previous_failures
+        - 0.025 * (test_coverage - 60)
+        + 0.50 * recent_failure_flag
+        - 0.015 * (days_since_failure - 15)
         + rng.normal(0, 0.3, n_samples)
     )
-    failed = (failure_score > 0.5).astype(int)
+    prob = 1 / (1 + np.exp(-logits))
+    failed = (rng.uniform(0, 1, n_samples) < prob).astype(int)
 
     return pd.DataFrame(
         {

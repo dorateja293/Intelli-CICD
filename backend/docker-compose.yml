@@ -1,0 +1,266 @@
+services:
+  # ===========================================
+  # Infrastructure Services
+  # ===========================================
+
+  postgres:
+    image: postgres:16-alpine
+    command: postgres -c 'hba_file=/var/lib/postgresql/data/pg_hba.conf'
+    environment:
+      POSTGRES_USER: intellici
+      POSTGRES_PASSWORD: password
+      POSTGRES_DB: intellici
+      POSTGRES_HOST_AUTH_METHOD: trust
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U intellici"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  redis:
+    image: redis:7-alpine
+    ports:
+      - "6380:6379"
+    volumes:
+      - redis_data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  zookeeper:
+    image: confluentinc/cp-zookeeper:7.5.0
+    environment:
+      ZOOKEEPER_CLIENT_PORT: 2181
+      ZOOKEEPER_TICK_TIME: 2000
+    ports:
+      - "2181:2181"
+    volumes:
+      - zookeeper_data:/var/lib/zookeeper/data
+
+  kafka:
+    image: confluentinc/cp-kafka:7.5.0
+    depends_on:
+      - zookeeper
+    ports:
+      - "9092:9092"
+      - "29092:29092"
+    environment:
+      KAFKA_BROKER_ID: 1
+      KAFKA_ZOOKEEPER_CONNECT: zookeeper:2181
+      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: PLAINTEXT:PLAINTEXT,PLAINTEXT_HOST:PLAINTEXT
+      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://kafka:9092,PLAINTEXT_HOST://localhost:29092
+      KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
+      KAFKA_TRANSACTION_STATE_LOG_MIN_ISR: 1
+      KAFKA_TRANSACTION_STATE_LOG_REPLICATION_FACTOR: 1
+      KAFKA_AUTO_CREATE_TOPICS_ENABLE: "true"
+    volumes:
+      - kafka_data:/var/lib/kafka/data
+    healthcheck:
+      test: ["CMD", "kafka-broker-api-versions", "--bootstrap-server", "localhost:9092"]
+      interval: 10s
+      timeout: 10s
+      retries: 5
+
+  elasticsearch:
+    image: docker.elastic.co/elasticsearch/elasticsearch:8.12.0
+    environment:
+      - discovery.type=single-node
+      - ES_JAVA_OPTS=-Xms512m -Xmx512m
+      - xpack.security.enabled=false
+    ports:
+      - "9200:9200"
+    volumes:
+      - elasticsearch_data:/usr/share/elasticsearch/data
+    healthcheck:
+      test: ["CMD-SHELL", "curl -s http://localhost:9200/_cluster/health | grep -q '\"status\":\"green\"\\|\"status\":\"yellow\"'"]
+      interval: 10s
+      timeout: 10s
+      retries: 5
+
+  # ===========================================
+  # Intelli-CI Services
+  # ===========================================
+
+  api:
+    build:
+      context: .
+      target: api-service
+    ports:
+      - "8000:8000"
+    environment:
+      - DATABASE_URL=postgresql+asyncpg://intellici:password@postgres:5432/intellici
+      - REDIS_URL=redis://redis:6379
+      - KAFKA_BOOTSTRAP_SERVERS=kafka:9092
+      - ELASTICSEARCH_HOSTS=http://elasticsearch:9200
+      - LOG_LEVEL=INFO
+      - SERVICE_NAME=api-service
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    restart: unless-stopped
+
+  webhook:
+    build:
+      context: .
+      target: webhook-service
+    ports:
+      - "8001:8001"
+    environment:
+      - DATABASE_URL=postgresql+asyncpg://intellici:password@postgres:5432/intellici
+      - REDIS_URL=redis://redis:6379
+      - KAFKA_BOOTSTRAP_SERVERS=kafka:9092
+      - LOG_LEVEL=INFO
+      - SERVICE_NAME=webhook-service
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      kafka:
+        condition: service_healthy
+    restart: unless-stopped
+
+  orchestrator:
+    build:
+      context: .
+      target: orchestrator-service
+    ports:
+      - "8002:8002"
+    environment:
+      - DATABASE_URL=postgresql+asyncpg://intellici:password@postgres:5432/intellici
+      - REDIS_URL=redis://redis:6379
+      - KAFKA_BOOTSTRAP_SERVERS=kafka:9092
+      - LOG_LEVEL=INFO
+      - SERVICE_NAME=orchestrator-service
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      kafka:
+        condition: service_healthy
+    restart: unless-stopped
+
+  worker:
+    build:
+      context: .
+      target: worker-service
+    environment:
+      - DATABASE_URL=postgresql+asyncpg://intellici:password@postgres:5432/intellici
+      - REDIS_URL=redis://redis:6379
+      - KAFKA_BOOTSTRAP_SERVERS=kafka:9092
+      - LOG_LEVEL=INFO
+      - SERVICE_NAME=worker-agent
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+    depends_on:
+      redis:
+        condition: service_healthy
+      kafka:
+        condition: service_healthy
+    restart: unless-stopped
+    deploy:
+      replicas: 2
+
+  log-processor:
+    build:
+      context: .
+      target: log-processor-service
+    ports:
+      - "8003:8003"
+    environment:
+      - DATABASE_URL=postgresql+asyncpg://intellici:password@postgres:5432/intellici
+      - REDIS_URL=redis://redis:6379
+      - KAFKA_BOOTSTRAP_SERVERS=kafka:9092
+      - ELASTICSEARCH_HOSTS=http://elasticsearch:9200
+      - LOG_LEVEL=INFO
+      - SERVICE_NAME=log-processor
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      kafka:
+        condition: service_healthy
+      elasticsearch:
+        condition: service_healthy
+    restart: unless-stopped
+
+  security-scanner:
+    build:
+      context: .
+      target: security-scanner-service
+    ports:
+      - "8004:8004"
+    environment:
+      - DATABASE_URL=postgresql+asyncpg://intellici:password@postgres:5432/intellici
+      - REDIS_URL=redis://redis:6379
+      - KAFKA_BOOTSTRAP_SERVERS=kafka:9092
+      - LOG_LEVEL=INFO
+      - SERVICE_NAME=security-scanner
+    depends_on:
+      postgres:
+        condition: service_healthy
+      kafka:
+        condition: service_healthy
+    restart: unless-stopped
+
+  notification:
+    build:
+      context: .
+      target: notification-service
+    ports:
+      - "8005:8005"
+    environment:
+      - DATABASE_URL=postgresql+asyncpg://intellici:password@postgres:5432/intellici
+      - REDIS_URL=redis://redis:6379
+      - KAFKA_BOOTSTRAP_SERVERS=kafka:9092
+      - LOG_LEVEL=INFO
+      - SERVICE_NAME=notification-service
+      - DASHBOARD_URL=http://localhost:3000
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      kafka:
+        condition: service_healthy
+    restart: unless-stopped
+
+  log-analyzer:
+    build:
+      context: .
+      target: log-analyzer-service
+    ports:
+      - "8006:8006"
+    environment:
+      - DATABASE_URL=postgresql+asyncpg://intellici:password@postgres:5432/intellici
+      - REDIS_URL=redis://redis:6379
+      - KAFKA_BOOTSTRAP_SERVERS=kafka:9092
+      - LOG_LEVEL=INFO
+      - SERVICE_NAME=log-analyzer
+    depends_on:
+      postgres:
+        condition: service_healthy
+      kafka:
+        condition: service_healthy
+    restart: unless-stopped
+
+volumes:
+  postgres_data:
+  redis_data:
+  zookeeper_data:
+  kafka_data:
+  elasticsearch_data:
+
+networks:
+  default:
+    name: intellici-network

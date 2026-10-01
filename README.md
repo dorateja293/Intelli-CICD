@@ -1,278 +1,243 @@
-# Intelli-CI/CD
+# INTELLI-CI — Intelligent CI/CD Optimization Platform
 
-> AI-powered CI/CD optimization platform — predict build failures before they happen, understand why commits break pipelines, and make smarter decisions about what to run.
+[![Python](https://img.shields.io/badge/Python-3.12-3776AB?logo=python&logoColor=white)](https://python.org)
+[![FastAPI](https://img.shields.io/badge/FastAPI-0.115+-009688?logo=fastapi&logoColor=white)](https://fastapi.tiangolo.com)
+[![React](https://img.shields.io/badge/React-19-61DAFB?logo=react&logoColor=black)](https://react.dev)
+[![TailwindCSS](https://img.shields.io/badge/TailwindCSS-v4-38BDF8?logo=tailwindcss&logoColor=white)](https://tailwindcss.com)
+[![scikit-learn](https://img.shields.io/badge/scikit--learn-1.6+-F7931E?logo=scikit-learn&logoColor=white)](https://scikit-learn.org)
+[![PostgreSQL](https://img.shields.io/badge/PostgreSQL-15+-4169E1?logo=postgresql&logoColor=white)](https://www.postgresql.org)
+[![Redis](https://img.shields.io/badge/Redis-7+-DC382D?logo=redis&logoColor=white)](https://redis.io)
+[![Docker](https://img.shields.io/badge/Docker-Enabled-2496ED?logo=docker&logoColor=white)](https://docker.com)
 
-[![Python](https://img.shields.io/badge/Python-3.12-blue)](https://python.org)
-[![FastAPI](https://img.shields.io/badge/FastAPI-0.11x-009688)](https://fastapi.tiangolo.com)
-[![React](https://img.shields.io/badge/React-19-61DAFB)](https://react.dev)
-[![TailwindCSS](https://img.shields.io/badge/TailwindCSS-4-38BDF8)](https://tailwindcss.com)
-
----
-
-## Features
-
-| Feature | Description |
-|---|---|
-| **AI Failure Prediction** | ML model + LLM fusion predicts CI failure probability for every commit |
-| **Log Analyzer** | Paste raw CI logs and get a structured root-cause explanation |
-| **Analytics Dashboard** | Track failure rates, time saved, decision history and commit timelines |
-| **Commit Analysis** | Per-commit risk scoring with churn, coverage and contributor signals |
-| **GitHub Webhook** | Real-time ingestion of push events to auto-score incoming commits |
-| **User Auth** | JWT-based registration / login with bcrypt password hashing |
+> **INTELLI-CI** is an end-to-end intelligent CI/CD observability and optimization platform designed to eliminate pipeline bottlenecks, predict build failures proactively using Machine Learning, classify log anomalies using an automated AI rule engine, and recommend actionable pipeline optimizations.
 
 ---
 
-## Tech Stack
+## 📌 Problem Statement & Core Value
 
-### Backend
-- **FastAPI** — async REST API
-- **PostgreSQL + asyncpg** — primary database
-- **SQLAlchemy 2 (async)** — ORM
-- **Redis** — caching layer
-- **JWT / bcrypt** — authentication & password security
-- **scikit-learn** — RandomForest failure prediction model
-- **Ollama / OpenAI** — LLM risk classification
+In modern agile software engineering, development teams push code dozens of times a day. As test suites expand and multi-stage pipelines grow, CI/CD cycles frequently degrade:
+- **High Pipeline Latency:** Developers wait 15–30 minutes per commit, creating cognitive disruption and high cloud infrastructure costs.
+- **Flaky & Repetitive Failures:** Build breakages caused by missing dependencies, syntax regressions, or configuration drift stall release velocity.
+- **Lack of Pipeline Observability:** Teams lack clear percentile metrics (P50/P90/P95), stage duration breakdowns, and proactive risk warning before running expensive tests.
 
-### Frontend
-- **React 19** with Vite
-- **TailwindCSS v4** — utility-first styling
-- **Recharts** — analytics charts
-- **Lucide React** — icons
-- **React Router v6** — client-side routing
+**INTELLI-CI resolves this by:**
+1. **Pre-Execution Failure Prediction:** Evaluates git commit churn, author history, previous failures, and test coverage before running tests to estimate risk and suggest selective test execution.
+2. **Automated Root-Cause Log Analysis:** Parses raw build logs to instantly classify failure categories (dependencies, Docker/daemon issues, Python syntax, etc.) and generate one-click fix suggestions.
+3. **Continuous Optimization Engine:** Audits execution history across stages to calculate bottleneck stages and recommend concrete caching and parallelism optimizations.
 
 ---
 
-## Project Structure
+## 🏛️ System Architecture
+
+```mermaid
+flowchart TD
+    subgraph Developer_Workflow["Developer Workflow"]
+        DEV["Developer Git Push / PR"] -->|Webhook / Payload| API_GW["FastAPI API Gateway (:8000)"]
+    end
+
+    subgraph Core_Services["Core Backend Services"]
+        API_GW --> AUTH["Auth & JWT Security Service"]
+        API_GW --> ML_SVC["ML Risk Prediction Engine"]
+        API_GW --> LOG_SVC["AI Root-Cause Log Analyzer"]
+        API_GW --> DAG_SVC["DAG Pipeline Orchestration"]
+        API_GW --> OPT_SVC["Rule-Based Optimization Recommender"]
+    end
+
+    subgraph Data_Layer["Storage & Cache"]
+        AUTH & DAG_SVC & OPT_SVC <-->|SQLAlchemy Async| DB[("PostgreSQL / SQLite")]
+        API_GW <-->|Cache-Aside| REDIS[("Redis Cache")]
+        ML_SVC <-->|Serialized Model| PKL[("Random Forest Classifier .pkl")]
+    end
+
+    subgraph Frontend_SPA["Frontend (React 19 + Vite :3000)"]
+        UI_DASH["Live Summary Dashboard"]
+        UI_PRED["Interactive ML Failure Predictor"]
+        UI_LOGS["AI Log Analyzer Tool"]
+        UI_ANALYTICS["P50/P90/P95 Analytics & Latency Charts"]
+        UI_REPOS["Repository & Pipeline Explorer"]
+    end
+
+    Frontend_SPA <-->|REST API / JSON| API_GW
+```
+
+---
+
+## 🧠 Machine Learning Engine
+
+INTELLI-CI incorporates a calibrated `RandomForestClassifier` trained on commit metrics and pipeline history.
+
+### Model Features (11 Dimensions):
+| Feature | Type | Description |
+|---|---|---|
+| `files_changed` | int | Total number of files altered in the commit |
+| `lines_added` | int | Total lines added |
+| `lines_deleted` | int | Total lines removed |
+| `code_churn` | int | Sum of additions and deletions |
+| `previous_failures` | int | Number of recent failures on branch/repo |
+| `test_coverage` | float | Current test suite code coverage percentage (0–100%) |
+| `is_merge_commit` | int | Binary indicator (1 if merge, 0 if standard commit) |
+| `commit_message_length` | int | Character length of the commit message |
+| `num_contributors_last_30d` | int | Active contributor count on the repository |
+| `days_since_last_failure` | float | Time elapsed since previous pipeline breakage |
+| `recent_failure_flag` | int | 1 if a failure occurred in the last 24 hours |
+
+### Decision Thresholds:
+- **`RUN_TESTS`** ($P(\text{fail}) \ge 0.55$): High risk detected. Run the complete test suite.
+- **`PARTIAL_TESTS`** ($0.30 \le P(\text{fail}) < 0.55$): Moderate risk. Run targeted fast unit tests.
+- **`SKIP_TESTS`** ($P(\text{fail}) < 0.30$): Low risk detected (docs, small formatting). Recommend skipping non-essential stages to save compute.
+
+---
+
+## 📂 Project Structure
 
 ```
 intelli-ci/
-├── backend/                  # FastAPI application
-│   ├── ai/                   # Log analysis AI module
-│   ├── api/routes/           # REST endpoint handlers
-│   │   ├── analytics.py
-│   │   ├── auth.py
-│   │   ├── logs.py
-│   │   ├── predict.py
-│   │   ├── profile.py
-│   │   ├── system.py
-│   │   └── webhook.py
-│   ├── core/                 # Config, security helpers
-│   ├── database/             # DB connection & session
-│   ├── models/               # SQLAlchemy ORM models
-│   ├── services/             # Business logic (ML, LLM, decision engine)
-│   ├── tests/                # pytest test suite
-│   ├── main.py               # FastAPI app entry point
-│   ├── requirements.txt
-│   └── .env.example          # Environment variable template
+├── backend/                  # FastAPI Application
+│   ├── ai/                   # AI Rule Engine for Log Analysis
+│   ├── core/                 # App configuration & settings
+│   ├── seed.py               # Comprehensive database seeder
+│   ├── services/             # Core service controllers & endpoints
+│   │   ├── api/main.py       # Main FastAPI application router
+│   │   └── webhook/main.py   # Webhook ingestion service
+│   ├── shared/               # Reusable DB models, auth, security & redis
+│   │   ├── database/         # Async engine & session manager
+│   │   ├── models/           # SQLAlchemy 2.0 ORM schemas
+│   │   ├── security/         # JWT tokens & bcrypt password hashing
+│   │   └── redis_client/     # Resilient Redis cache-aside client
+│   └── tests/                # Automated pytest suite (24 unit tests)
 │
-├── frontend/                 # React + Vite SPA
-│   ├── public/
+├── frontend/                 # React 19 + Vite Single Page App
 │   ├── src/
-│   │   ├── components/       # Reusable UI components
-│   │   ├── context/          # Auth & Sidebar React contexts
-│   │   ├── layouts/          # DashboardLayout, AuthLayout
-│   │   ├── pages/            # Full page components
-│   │   └── services/         # Axios API client (api.js)
-│   ├── index.html
+│   │   ├── pages/            # Dashboard, Analytics, Predict, Logs, Projects, Profile
+│   │   ├── components/       # UI layout, charts, badges, modals
+│   │   ├── services/api.js   # Unified Axios API client
+│   │   └── context/          # React AuthContext & state providers
 │   ├── package.json
-│   └── vite.config.js
+│   └── vite.config.js        # Vite dev server with backend proxy
 │
-├── ml-engine/                # Training pipeline & predictor
-│   ├── dataset/              # Training data (CSV)
-│   ├── predictor/predict.py  # Inference helper
-│   └── training/train.py     # Model training script
+├── ml-engine/                # Machine Learning Pipeline
+│   ├── dataset/              # Dataset generator (generate_dataset.py)
+│   ├── models/               # Saved model (model.pkl)
+│   ├── predictor/predict.py  # Standalone & API inference module
+│   └── training/train.py     # Training script with Scikit-learn
 │
-├── llm-engine/               # LLM commit analysis modules
-│   ├── commit_analysis/
-│   └── risk_classifier/
+├── devops/                   # Containerization & Nginx
+│   ├── docker/               # Dockerfiles for backend & frontend
+│   ├── nginx/nginx.conf      # Reverse proxy configuration
+│   └── docker-compose.yml    # Multi-container orchestration
 │
-├── devops/                   # Docker & Nginx configs
-│   ├── docker/
-│   │   ├── backend.Dockerfile
-│   │   └── frontend.Dockerfile
-│   ├── nginx/nginx.conf
-│   └── docker-compose.yml
-│
-├── docs/
-│   └── architecture.md
-│
-├── .github/workflows/ci.yml  # GitHub Actions CI pipeline
-├── pytest.ini
-└── README.md
+├── docker-compose.yml        # Root Docker Compose file
+├── pytest.ini                # Pytest configuration
+├── START.md                  # Quick run instructions
+└── README.md                 # Project documentation
 ```
 
 ---
 
-## Getting Started
+## 🚀 Getting Started
 
-### Prerequisites
-
+### 1. Prerequisites
 - Python 3.12+
-- Node.js 18+
-- PostgreSQL 15+
-- Redis 7+
-- *(Optional)* Ollama for local LLM inference
+- Node.js 18+ and npm
+- *(Optional)* Docker Desktop
 
----
-
-### 1. Clone the repository
+### 2. Local Setup
 
 ```bash
+# Clone the repository
 git clone https://github.com/dorateja293/Intelli-CICD.git
 cd Intelli-CICD
-```
 
----
-
-### 2. Backend setup
-
-```bash
-# Create and activate a virtual environment
+# Set up Python virtual environment
 python -m venv venv
-venv\Scripts\activate          # Windows
-# source venv/bin/activate     # macOS / Linux
+.\venv\Scripts\activate
 
-# Install dependencies
+# Install backend dependencies
 pip install -r backend/requirements.txt
 
-# Configure environment
-cp backend/.env.example backend/.env
-# Edit backend/.env with your database URL, secret key, etc.
+# (Optional) Retrain ML Model & Seed Database
+python -m ml-engine.training.train
+python backend/seed.py
 ```
 
-#### Environment variables (`backend/.env`)
-
-| Variable | Description |
-|---|---|
-| `DATABASE_URL` | PostgreSQL connection string (`postgresql+asyncpg://...`) |
-| `REDIS_URL` | Redis connection string (`redis://localhost:6379/0`) |
-| `SECRET_KEY` | 32-char hex secret — generate with `python -c "import secrets; print(secrets.token_hex(32))"` |
-| `ALGORITHM` | JWT algorithm (default: `HS256`) |
-| `ACCESS_TOKEN_EXPIRE_MINUTES` | Token lifetime in minutes (default: `1440`) |
-| `GITHUB_TOKEN` | GitHub personal access token for webhook validation |
-| `GITHUB_WEBHOOK_SECRET` | Shared secret registered on GitHub webhook settings |
-| `LLM_PROVIDER` | `openai` \| `ollama` \| `none` |
-| `OPENAI_API_KEY` | OpenAI API key (only if `LLM_PROVIDER=openai`) |
-| `OLLAMA_BASE_URL` | Ollama base URL (default: `http://localhost:11434`) |
-| `OLLAMA_MODEL` | Ollama model name (default: `llama3.2`) |
-| `ML_MODEL_PATH` | Path to trained `.pkl` model file |
-| `DECISION_THRESHOLD_RUN` | Score above which CI always runs (default: `0.55`) |
-| `DECISION_THRESHOLD_PARTIAL` | Score above which partial CI runs (default: `0.30`) |
-
-#### Start the backend
-
+### 3. Start Backend API
 ```bash
-python -m uvicorn backend.main:app --reload --port 8000
+# In Terminal 1:
+python -m uvicorn services.api.main:app --app-dir backend --host 0.0.0.0 --port 8000 --reload
 ```
+- API is live at: `http://localhost:8000`
+- Interactive Swagger UI: `http://localhost:8000/docs`
 
-API docs available at: http://localhost:8000/docs
-
----
-
-### 3. Train the ML model *(optional — skip if you have a pre-trained model)*
-
+### 4. Start Frontend
 ```bash
-python ml-engine/training/train.py
-# Outputs: ml-engine/models/model.pkl
-```
-
----
-
-### 4. Frontend setup
-
-```bash
+# In Terminal 2:
 cd frontend
 npm install
-
-# Configure environment (create frontend/.env)
-echo "VITE_API_URL=http://localhost:8000" > .env
-```
-
-#### Start the frontend dev server
-
-```bash
 npm run dev
-# Runs on http://localhost:3000
 ```
+- Frontend application is live at: `http://localhost:3000`
 
-#### Build for production
+---
+
+## 🐳 Docker Deployment
+
+Run the entire stack with Docker Compose:
 
 ```bash
-npm run build
-# Output: frontend/dist/
+docker compose up --build -d
 ```
+
+| Service | Address |
+|---|---|
+| **Frontend Web App** | http://localhost:3000 |
+| **Backend REST API** | http://localhost:8000 |
+| **PostgreSQL Database** | `localhost:5432` |
+| **Redis Cache** | `localhost:6379` |
 
 ---
 
-## Running with Docker
+## 🧪 Automated Testing
+
+Run the full pytest suite:
 
 ```bash
-# From the devops/ directory
-cd devops
-docker compose up --build
+.\venv\Scripts\pytest.exe backend/tests -v
 ```
 
-Services:
-- Frontend: http://localhost:80
-- Backend API: http://localhost:8000
-- PostgreSQL: port 5432
-- Redis: port 6379
+**Test Coverage Summary (24/24 passing):**
+- ✅ Webhook Signature Validation (GitHub HMAC SHA-256, GitLab Tokens)
+- ✅ Payload Normalization
+- ✅ Pipeline DAG Ordering & Cyclic Dependency Detection
+- ✅ AI Log Analysis Rule Engine (npm, Python, Docker daemon errors)
+- ✅ Exponential Backoff Calculation
+- ✅ ML Prediction Endpoints (`/api/v1/predict`)
+- ✅ Analytics Endpoints (`/api/v1/analytics/durations`, `/stages`, `/failures`, `/trends`)
+- ✅ Multi-service Health Endpoint (`/health`)
 
 ---
 
-## Running Tests
+## 🔑 Demo Credentials
 
-```bash
-# Backend tests
-pytest backend/tests/ -v
+| Role | Email | Password | Access Scope |
+|---|---|---|---|
+| **Admin** | `admin@test.com` | `Admin123456` | Full Platform & User Administration |
+| **Developer** | `developer@test.com` | `Developer123` | Pipeline Runs, Risk Prediction, Log Analyzer |
+| **Viewer** | `viewer@test.com` | `Viewer123456` | Read-only Analytics & Dashboards |
 
-# Run with coverage
-pytest backend/tests/ --cov=backend --cov-report=term-missing
-```
-
----
-
-## How the AI Prediction Works
-
-Every commit is scored using a two-model fusion:
-
-1. **ML model** — `RandomForestClassifier` trained on CI run history.  
-   Input features: files changed, lines added/deleted, code churn, test coverage, commit message length, previous failures, contributor count, days since last failure, merge commit flag, recent failure flag.  
-   Output: `failure_probability` (0.0 – 1.0)
-
-2. **LLM analysis** — commit message + changed file list are sent to Ollama/OpenAI.  
-   Output: `risk_level` (LOW / MEDIUM / HIGH → mapped to 0.1 / 0.5 / 0.9)
-
-3. **Fusion formula:**
-   ```
-   final_score = (0.60 × ML_score) + (0.40 × LLM_score)
-   ```
-
-4. **Decision engine:**
-   - `final_score > 0.55` → **RUN** full CI
-   - `0.30 < final_score ≤ 0.55` → **PARTIAL** CI (fast checks only)
-   - `final_score ≤ 0.30` → **SKIP** CI
+*(Note: Unauthenticated demo mode is also enabled for quick evaluation).*
 
 ---
 
-## API Overview
+## 🎓 Academic / Placement Presentation Highlights
 
-| Method | Endpoint | Description |
-|---|---|---|
-| `POST` | `/api/auth/register` | Create a new user account |
-| `POST` | `/api/auth/login` | Obtain a JWT access token |
-| `GET` | `/api/analytics/summary` | Dashboard KPI summary |
-| `GET` | `/api/analytics/timeline` | Commit failure timeline |
-| `POST` | `/api/predict` | Score a commit (ML + LLM fusion) |
-| `POST` | `/api/logs/analyze` | Analyze raw CI log output |
-| `GET` | `/api/repositories` | List tracked repositories |
-| `POST` | `/api/webhook/github` | GitHub push event webhook |
-| `GET` | `/api/system/health` | Health check |
-
-Full interactive docs: http://localhost:8000/docs
+When presenting **INTELLI-CI**, highlight the following design patterns:
+1. **Full-Stack Integration:** Real asynchronous communication from React 19 through FastAPI to PostgreSQL/Redis.
+2. **Machine Learning in DevOps (MLOps):** How synthetic/historical commit features are extracted and evaluated with Random Forest classification to optimize compute utilization.
+3. **Resilience & Fallback Architecture:** Graceful degradation on missing Kafka/Redis instances allowing deployment in both lightweight and enterprise environments.
+4. **Actionable Insights:** Rather than just displaying graphs, the platform delivers computed recommendations (e.g. dependency caching, parallelization) with estimated time savings.
 
 ---
 
-## License
+## 📄 License
 
-MIT
+This project is licensed under the MIT License.

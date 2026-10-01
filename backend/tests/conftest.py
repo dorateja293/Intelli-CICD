@@ -1,41 +1,45 @@
 """
-Test configuration — sets up the SQLite test database before collection begins.
-
-Environment variables MUST be set before any backend module is imported
-(pydantic-settings caches Settings on first use via @lru_cache).
+Pytest configuration and fixtures.
 """
+
 import asyncio
-import os
+from typing import AsyncGenerator, Generator
 
-# ── Override env vars before any backend import ───────────────────────────────
-os.environ["DATABASE_URL"] = "sqlite+aiosqlite:///./test.db"
-os.environ.setdefault("SECRET_KEY", "test-secret-key-32-chars-minimum!!")
-os.environ.setdefault("LLM_PROVIDER", "none")
-os.environ.setdefault("ML_MODEL_PATH", "")
+import pytest
+import pytest_asyncio
+from sqlalchemy.ext.asyncio import AsyncSession, create_async_engine, async_sessionmaker
 
-import pytest  # noqa: E402
-
-# Import engine/Base only after env vars are set so `get_settings()` cache
-# is populated with the test values on first call.
-from backend.database.connection import Base, engine  # noqa: E402
-from backend.main import app  # noqa: E402, F401  (re-exported for test_api.py)
+from shared.database.connection import Base
 
 
-# ── Synchronous session-scoped DB setup (avoids event_loop scope conflicts) ──
+# Test database URL
+TEST_DATABASE_URL = "sqlite+aiosqlite:///:memory:"
 
-@pytest.fixture(scope="session", autouse=True)
-def setup_database():
-    """Drop and recreate all tables once per test session for a clean state."""
 
-    async def _init():
-        async with engine.begin() as conn:
-            await conn.run_sync(Base.metadata.drop_all)
-            await conn.run_sync(Base.metadata.create_all)
+@pytest.fixture(scope="session")
+def event_loop() -> Generator:
+    """Create an event loop for the test session."""
+    loop = asyncio.get_event_loop_policy().new_event_loop()
+    yield loop
+    loop.close()
 
-    async def _cleanup():
-        async with engine.begin() as conn:
-            await conn.run_sync(Base.metadata.drop_all)
 
-    asyncio.run(_init())
-    yield
-    asyncio.run(_cleanup())
+@pytest_asyncio.fixture(scope="function")
+async def db_session() -> AsyncGenerator[AsyncSession, None]:
+    """Create a fresh database session for each test."""
+    engine = create_async_engine(TEST_DATABASE_URL, echo=False)
+
+    async with engine.begin() as conn:
+        await conn.run_sync(Base.metadata.create_all)
+
+    session_factory = async_sessionmaker(
+        engine, class_=AsyncSession, expire_on_commit=False
+    )
+
+    async with session_factory() as session:
+        yield session
+
+    async with engine.begin() as conn:
+        await conn.run_sync(Base.metadata.drop_all)
+
+    await engine.dispose()

@@ -1,34 +1,68 @@
-import { Link, useNavigate } from 'react-router-dom'
-import FormInput from '../components/FormInput'
-import Button from '../components/Button'
+import { Link, useNavigate } from 'react-router-dom';
+import { authService } from '../services/api';
+import { saveUser } from '../services/localData';
+import { useState } from 'react';
 
 export default function Login() {
-  const navigate = useNavigate()
+  const navigate = useNavigate();
+  const [error, setError] = useState('');
+  
+  const handleLogin = async (e) => {
+    e.preventDefault();
+    const formData = new FormData(e.currentTarget);
+    const credentials = {
+      email: formData.get('email'),
+      password: formData.get('password'),
+    };
+
+    try {
+      const response = await authService.login(credentials);
+      const token = response.data?.data?.access_token || response.data?.access_token;
+      if (!token) throw new Error('No token received');
+      localStorage.setItem('intelli_ci_token', token);
+
+      // Fetch user profile with the new token
+      const meResponse = await authService.getMe();
+      const user = meResponse.data?.data || meResponse.data;
+      if (user) saveUser(user, token);
+
+      navigate('/dashboard');
+    } catch (err) {
+      if (!credentials.email || !credentials.password) {
+        setError('Enter email and password.');
+        return;
+      }
+      setError(err.response?.data?.detail || err.message || 'Invalid email or password.');
+    }
+  };
+
   return (
-    <div className="min-h-screen bg-black flex items-center justify-center p-6 relative overflow-hidden">
-      <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] bg-indigo-600/20 rounded-full blur-[120px] pointer-events-none"></div>
-      
-      <div className="max-w-[420px] w-full glass-panel p-10 relative z-10 border border-white/10 shadow-2xl backdrop-blur-2xl bg-black/60">
-        <div className="w-12 h-12 bg-white rounded-xl text-black flex items-center justify-center font-bold text-xl mb-8 shadow-[0_0_20px_rgba(255,255,255,0.2)]">IC</div>
+    <div className="min-h-screen bg-githubBg flex items-center justify-center p-8">
+      <div className="w-full max-w-md bg-githubCard border border-githubBorder rounded-xl p-10 shadow-xl flex flex-col gap-8">
+        <div className="text-center">
+          <h2 className="text-2xl font-bold text-white">Welcome Back</h2>
+          <p className="text-githubTextSecondary text-sm mt-2">Sign in to your Intelli-CI account</p>
+        </div>
         
-        <h1 className="text-2xl font-bold text-white mb-2 tracking-tight">Welcome back</h1>
-        <p className="text-[#a1a1aa] text-sm mb-8 font-medium">Enter your credentials to access your dashboard.</p>
-        
-        <form className="space-y-5" onSubmit={(e) => { e.preventDefault(); navigate('/dashboard') }}>
-          <FormInput id="email" label="Email Address" type="email" placeholder="name@company.com" required />
-          <FormInput id="password" label="Password" type="password" placeholder="••••••••" required />
-          
-          <div className="pt-4">
-            <Button type="submit" variant="indigo">Sign In</Button>
+        <form className="flex flex-col gap-5" onSubmit={handleLogin}>
+          {error && <p className="rounded-lg border border-red-900/50 bg-red-900/20 px-4 py-3 text-sm text-red-300">{error}</p>}
+          <div>
+            <label className="block text-sm font-medium text-githubTextPrimary mb-2">Email</label>
+            <input name="email" type="email" className="w-full bg-githubBg border border-githubBorder rounded-lg px-4 py-3 text-white focus:border-githubPrimary focus:outline-none transition-colors" placeholder="you@company.com" required />
           </div>
+          <div>
+            <label className="block text-sm font-medium text-githubTextPrimary mb-2">Password</label>
+            <input name="password" type="password" className="w-full bg-githubBg border border-githubBorder rounded-lg px-4 py-3 text-white focus:border-githubPrimary focus:outline-none transition-colors" placeholder="••••••••" required />
+          </div>
+          <button type="submit" className="w-full bg-githubPrimary text-white rounded-lg px-6 py-3 font-medium hover:bg-green-600 transition-colors mt-3">
+            Login
+          </button>
         </form>
         
-        <div className="mt-8 pt-6 border-t border-white/10 text-center">
-          <p className="text-[#71717a] text-sm font-medium">
-            New to Intelli-CI? <Link to="/signup" className="text-indigo-400 hover:text-indigo-300 font-bold transition-colors">Create an account</Link>
-          </p>
-        </div>
+        <p className="text-center text-sm text-githubTextSecondary">
+          Don't have an account? <Link to="/signup" className="text-githubPrimary hover:underline">Sign up</Link>
+        </p>
       </div>
     </div>
-  )
+  );
 }
