@@ -232,19 +232,22 @@ app = FastAPI(
     lifespan=lifespan,
 )
 
-# CORS middleware
+# CORS middleware — origins driven by CORS_ORIGINS env var (comma-separated)
+_raw_origins = os.getenv("CORS_ORIGINS", "http://localhost:3000,http://127.0.0.1:3000")
+_allow_origins = [o.strip() for o in _raw_origins.split(",") if o.strip()]
+# Always include localhost for local development
+for _lo in ["http://localhost:3000", "http://127.0.0.1:3000", "http://localhost:3001"]:
+    if _lo not in _allow_origins:
+        _allow_origins.append(_lo)
+
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=[
-        "http://localhost:3000",
-        "http://127.0.0.1:3000",
-        "http://localhost:3001",
-        "http://127.0.0.1:3001",
-    ],
+    allow_origins=_allow_origins,
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
 
 
 # ================================
