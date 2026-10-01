@@ -28,9 +28,9 @@ frontend/.env.local
 npm-debug.log*
 
 # ── ML artefacts ──────────────────────────────────────────────────────────────
-ml-engine/models/
-*.pkl
+!ml-engine/models/model.pkl
 *.joblib
+
 
 # ── Editor / OS ───────────────────────────────────────────────────────────────
 .DS_Store
