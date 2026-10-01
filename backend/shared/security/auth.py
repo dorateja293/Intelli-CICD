@@ -24,34 +24,34 @@ from shared.models import RefreshToken, User
 logger = structlog.get_logger()
 settings = get_settings()
 
-# Compatibility shim for passlib with bcrypt >= 4.0.0
+# Direct bcrypt implementation (immune to passlib's bcrypt >= 4.0 / Python 3.14 wrap-bug detector crash)
 import bcrypt
-if not hasattr(bcrypt, "__about__"):
-    bcrypt.__about__ = type("about", (), {"__version__": getattr(bcrypt, "__version__", "4.0.1")})()
 
-# Password hashing
-pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
+def hash_password(password: str) -> str:
+    """Hash a password using bcrypt directly."""
+    pwd_bytes = password.encode("utf-8")[:72]
+    salt = bcrypt.gensalt(rounds=12)
+    return bcrypt.hashpw(pwd_bytes, salt).decode("utf-8")
+
+
+def verify_password(plain_password: str, hashed_password: str) -> bool:
+    """Verify a plain password against a bcrypt hash."""
+    try:
+        pwd_bytes = plain_password.encode("utf-8")[:72]
+        hash_bytes = hashed_password.encode("utf-8")
+        return bcrypt.checkpw(pwd_bytes, hash_bytes)
+    except Exception as e:
+        logger.warning("Password verification failed", error=str(e))
+        return False
+
 
 # Bearer token scheme
 bearer_scheme = HTTPBearer()
 
 
 # ================================
-# Password Utilities
-# ================================
-
-def hash_password(password: str) -> str:
-    """Hash a password."""
-    return pwd_context.hash(password)
-
-
-def verify_password(plain_password: str, hashed_password: str) -> bool:
-    """Verify a password against its hash."""
-    return pwd_context.verify(plain_password, hashed_password)
-
-
-# ================================
 # JWT Utilities
+
 # ================================
 
 def create_access_token(
